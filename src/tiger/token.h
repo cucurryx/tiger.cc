@@ -4,11 +4,12 @@
 #include <string>
 #include <unordered_map>
 
+template <typename K, typename V>
+using Map = std::unordered_map<K, V>;
 
 class Token {
 public:
     enum class Tag {
-
         // keywords
         TOKEN_ARRAY,
         TOKEN_IF,
@@ -84,13 +85,28 @@ public:
     };
 
 public:
-    Token(Tag tag, const std::string &var): 
-        tag_(tag), var_(var) { }
+
+    Token(Tag tag, std::string &&var):
+        tag_(tag), var_(var) {}
+
+    std::string GetName() {
+        auto node = tag_name_m_.find(tag_);
+        assert(node != tag_name_m_.end());
+        return node->second;
+    }
+
+    Tag Type() {
+        return tag_;
+    }
+
+    std::string Value() {
+        return var_;
+    }
 
 public:
     Tag tag_;
     std::string var_;
 
 private:
-    static const unordered_map<Tag, std::string> tag_name_m_;
+    static const Map<Tag, std::string> tag_name_m_;
 };
