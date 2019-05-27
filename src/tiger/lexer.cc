@@ -124,7 +124,7 @@ bool Lexer::Try(char c) {
 }
 
 void Lexer::SkipSpace() {
-    while (Try(' '));
+    while (Try(' ') || Try('\t'));
 }
 
 Lexer::TokenPtr Lexer::MakeToken(Token::Tag tag, std::string &&var) {
@@ -188,8 +188,14 @@ Lexer::TokenPtr Lexer::ScanComment() {
 }
 
 Lexer::TokenPtr Lexer::ScanString() {
-    while (true) {
-        break;
+    char c;
+    std::string s;
+    while ((c = Next()) != '\"' && c != '\0') {
+        s.push_back(c);
     }
-    return nullptr;
+    if (c == '\0') {
+        return MakeToken(Token::Tag::INVALID, "\"" + s);
+    } else {
+        return MakeToken(Token::Tag::STR, std::move(s));
+    }
 }

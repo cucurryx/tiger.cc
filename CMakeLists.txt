@@ -14,4 +14,4 @@ add_executable(tiger_cc
         src/tiger/parser.cc
         src/tiger/parser.h
         src/tiger/token.cc
-        src/tiger/token.h)
+        src/tiger/token.h src/utils/printer.h)
