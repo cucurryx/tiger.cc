@@ -1,3 +1,6 @@
+#ifndef TIGER_CC_TOKEN_H
+#define TIGER_CC_TOKEN_H
+
 #include "common.h"
 
 #include <variant>
@@ -7,99 +10,106 @@
 template <typename K, typename V>
 using Map = std::unordered_map<K, V>;
 
+class Lexer;
+
 class Token {
+public:
+    friend class Lexer;
+    
 public:
     enum class Tag {
         // keywords
-        TOKEN_ARRAY,
-        TOKEN_IF,
-        TOKEN_THEN,
-        TOKEN_ELSE,
-        TOKEN_WHILE,
-        TOKEN_FOR,
-        TOKEN_TO,
-        TOKEN_DO,
-        TOKEN_LET,
-        TOKEN_IN,
-        TOKEN_END,
-        TOKEN_OF,
-        TOKEN_BREAK,
-        TOKEN_NIL,
-        TOKEN_FUNCTION,
-        TOKEN_VAR,
-        TOKEN_TYPE,
-        TOKEN_IMPORT,
-        TOKEN_PRIMITIVE,
+        ARRAY,
+        IF,
+        THEN,
+        ELSE,
+        WHILE,
+        FOR,
+        TO,
+        DO,
+        LET,
+        IN,
+        END,
+        OF,
+        BREAK,
+        NIL,
+        FUNCTION,
+        VAR,
+        TYPE,
+        IMPORT,
+        PRIMITIVE,
 
         // oop keywords
-        TOKEN_CLASS,
-        TOKEN_EXTENDS,
-        TOKEN_METHOD,
-        TOKEN_NEW,
+        CLASS,
+        EXTENDS,
+        METHOD,
+        NEW,
 
         // symbols
-        TOKEN_COMMA,     // ,
-        TOKEN_COLON,     // :
-        TOKEN_SEMI,      // ;
-        TOKEN_LPAREN,    // (
-        TOKEN_RPAREN,    // )
-        TOKEN_LSQB,      // [
-        TOKEN_RSQB,      // ]
-        TOKEN_LBRACE,     // { 
-        TOKEN_RBRACE,     // }
-        TOKEN_DOT,        // .
-        TOKEN_PLUS,       // +
-        TOKEN_MINUS,      // -
-        TOKEN_STAR,       // *
-        TOKEN_DIV,        // /
-        TOKEN_EQUA,       // =
-        TOKEN_NOT_EQAL,   // <>
-        TOKEN_LESS,       // <
-        TOKEN_GREATER,    // >
-        TOKEN_LEQ,        // <=
-        TOKEN_GEQ,        // >=
-        TOKEN_AND,        // &
-        TOKEN_OR,         // |
-        TOKEN_ASSIGN,     // :=
+        COMMA,     // ,
+        COLON,     // :
+        SEMI,      // ;
+        LPAREN,    // (
+        RPAREN,    // )
+        LSQUB,     // [
+        RSQUB,      // ]
+        LBRACE,     // { 
+        RBRACE,     // }
+        DOT,        // .
+        PLUS,       // +
+        MINUS,      // -
+        STAR,       // *
+        DIV,        // /
+        EQUA,       // =
+        NOT_EQAL,   // <>
+        LESS,       // <
+        GREATER,    // >
+        LEQ,        // <=
+        GEQ,        // >=
+        AND,        // &
+        OR,         // |
+        ASSIGN,     // :=
 
         // white space
-        TOKEN_SPACE,
+        SPACE,
 
         // end of line
-        TOKEN_EOL,
+        EOL,
 
         // strings
-        TOKEN_STR,
+        STR,
 
         // comments
-        TOKEN_COMMENT,
+        COMMENT,
 
         // identifiers
-        TOKEN_ID,
+        ID,
 
         // numbers
-        TOKEN_NUM,
+        NUM,
 
         // invalid characters
-        TOKEN_INVALID,
+        INVALID,
     };
 
 public:
+    Token(Tag tag, const std::string &var):
+        tag_(tag), var_(var) {}
 
     Token(Tag tag, std::string &&var):
         tag_(tag), var_(var) {}
 
-    std::string GetName() {
+    const std::string Name() const {
         auto node = tag_name_m_.find(tag_);
         assert(node != tag_name_m_.end());
         return node->second;
     }
 
-    Tag Type() {
+    const Tag Type() const {
         return tag_;
     }
 
-    std::string Value() {
+    const std::string Value() const {
         return var_;
     }
 
@@ -110,3 +120,5 @@ public:
 private:
     static const Map<Tag, std::string> tag_name_m_;
 };
+
+#endif // TIGER_CC_TOKEN_H

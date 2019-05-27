@@ -1,23 +1,42 @@
+#ifndef TIGER_CC_LEXER_H
+#define TIGER_CC_LEXER_H
+
 #include "token.h"
-
 #include <memory>
-
 
 class Lexer {
 public:
-    using TokenPtr = std::unique_ptr<Token>;
+    using TokenPtr = std::shared_ptr<Token>;
 
 public:
-    Lexer(std::string &&stream): stream_(stream) {}
+    explicit Lexer(std::string &&stream):
+        stream_(stream) {}
 
-    TokenPtr NextToken();
-    TokenPtr CurrToken();
+    TokenPtr GetNextToken();
+    TokenPtr GetCurrToken();
 
 private:
-    char NextChar();
+    char Next();
+    char Curr();
+    bool Is(char c);
+    bool Try(char c);
+    void SkipSpace();
+
+    TokenPtr ScanId(char c);
+    TokenPtr ScanMainId(char c);
+    TokenPtr ScanNormalId(char c);
+
+    TokenPtr ScanNum(char c);
+    TokenPtr ScanComment();
+    TokenPtr ScanString();
+
+
+    static TokenPtr MakeToken(Token::Tag tag, std::string &&var);
 
 private:
     std::string stream_;
     u64 index_ {0};
-    TokenPtr curr_token_;
+    TokenPtr curr_token_{nullptr};
 };
+
+#endif // TIGER_CC_LEXER_H

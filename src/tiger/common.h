@@ -1,3 +1,7 @@
+#ifndef TIGER_CC_COMMON_H
+#define TIGER_CC_COMMON_H
+
+
 #include <cstdint>
 
 using u8 = uint8_t;
@@ -10,3 +14,5 @@ using i64 = int64_t;
 
 using f32 = float;
 using f64 = double;
+
+#endif // TIGER_CC_COMMON_H
