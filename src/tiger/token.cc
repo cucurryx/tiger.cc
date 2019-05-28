@@ -56,3 +56,31 @@ const Map<Token::Tag, std::string> Token::tag_name_m_ {
     { Token::Tag::INVALID, "invalid" },
 };
 
+//‘array’, ‘if’, ‘then’, ‘else’, ‘while’, ‘
+// for’, ‘to’, ‘do’, ‘let’, ‘in’, ‘end’, ‘of’,
+// ‘break’, ‘nil’, ‘function’, ‘var’, ‘type’, ‘import’ and ‘primitive’
+const Map<std::string, Token::Tag> Token::keywords_m_ = {
+     { "array", Token::Tag::ARRAY },
+     { "if", Token::Tag::IF },
+     { "then", Token::Tag::THEN },
+     { "else", Token::Tag::ELSE },
+     { "while", Token::Tag::WHILE },
+     { "for", Token::Tag::FOR },
+     { "to", Token::Tag::TO },
+     { "do", Token::Tag::DO },
+     { "let", Token::Tag::LET },
+     { "in", Token::Tag::IN },
+     { "end", Token::Tag::END },
+     { "of", Token::Tag::OF },
+     { "break", Token::Tag::BREAK },
+     { "nil", Token::Tag::NIL },
+     { "function", Token::Tag::FUNCTION },
+     { "var", Token::Tag::VAR },
+     { "type", Token::Tag::TYPE },
+     { "import", Token::Tag::IMPORT },
+     { "primitive", Token::Tag::PRIMITIVE },
+     { "class", Token::Tag::CLASS },
+     { "extends", Token::Tag::EXTENDS },
+     { "method", Token::Tag::METHOD },
+     { "new", Token::Tag::NEW },
+};

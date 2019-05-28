@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-#include <variant>
+#include <utility>
 #include <string>
 #include <unordered_map>
 
@@ -93,10 +93,10 @@ public:
     };
 
 public:
-    Token(Tag tag, const std::string &var):
-        tag_(tag), var_(var) {}
-
     Token(Tag tag, std::string &&var):
+        tag_(tag), var_(std::move(var)) {}
+
+    Token(Tag tag, const std::string &var):
         tag_(tag), var_(var) {}
 
     const std::string Name() const {
@@ -113,12 +113,22 @@ public:
         return var_;
     }
 
+    static std::optional<Tag> IsKeyword(const std::string &str) {
+        auto it = keywords_m_.find(str);
+        if (it == keywords_m_.end()) {
+            return std::nullopt;
+        } else {
+            return it->second;
+        }
+    }
+
 public:
     Tag tag_;
     std::string var_;
 
 private:
     static const Map<Tag, std::string> tag_name_m_;
+    static const Map<std::string, Tag> keywords_m_;
 };
 
 #endif // TIGER_CC_TOKEN_H

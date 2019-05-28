@@ -30,8 +30,13 @@ private:
     TokenPtr ScanComment();
     TokenPtr ScanString();
 
+    char ParseOctNum();
+    char ParseHexNum();
+    static u8 HexToDigit(char c);
+    static u8 OctToDigit(char c);
 
     static TokenPtr MakeToken(Token::Tag tag, std::string &&var);
+    static TokenPtr MakeToken(Token::Tag tag, const std::string &var);
 
 private:
     std::string stream_;

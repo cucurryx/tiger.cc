@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "../utils/error.h"
 
 // scan the next token and return it
 Lexer::TokenPtr Lexer::GetNextToken() {
@@ -74,7 +75,7 @@ Lexer::TokenPtr Lexer::GetNextToken() {
             } else {
                 return MakeToken(Token::Tag::EOL, "\n");
             }
-        case '"': // TODO
+        case '"':
             return ScanString();
         case 'a' ... 'z': case 'A' ... 'Z': case '_':
             return ScanId(c);
@@ -128,7 +129,49 @@ void Lexer::SkipSpace() {
 }
 
 Lexer::TokenPtr Lexer::MakeToken(Token::Tag tag, std::string &&var) {
+    return std::make_shared<Token>(tag, std::move(var));
+}
+
+Lexer::TokenPtr Lexer::MakeToken(Token::Tag tag, const std::string &var) {
     return std::make_shared<Token>(tag, var);
+}
+
+char Lexer::ParseOctNum() {
+    u8 num = 0;
+    for (u8 i = 0; i < 3; ++i) {
+        num = (num << 3) + OctToDigit(Next());
+    }
+    return static_cast<char>(num);
+}
+
+char Lexer::ParseHexNum() {
+    u8  num = 0;
+    for (u8 i = 0; i < 2; ++i) {
+        num = (num << 4) + HexToDigit(Next());
+    }
+    return static_cast<char>(num);
+}
+
+u8 Lexer::HexToDigit(char c) {
+    if (isdigit(c)) {
+        return c - '0';
+    } else if (islower(c)) {
+        return c - 'a' + 10;
+    } else if (isupper(c)) {
+        return c - 'A' + 10;
+    } else {
+        PANIC(std::string(1, c) + " is not hex");
+    }
+    return 0;
+}
+
+u8 Lexer::OctToDigit(char c) {
+    if (c >= '0' && c <= '7') {
+        return c - '0';
+    } else {
+        PANIC(std::string(1, c) + " is not oct");
+    }
+    return 0;
 }
 
 Lexer::TokenPtr Lexer::ScanId(char c) {
@@ -156,6 +199,9 @@ Lexer::TokenPtr Lexer::ScanNormalId(char c) {
     while (isalnum((c = Curr())) || Is('_')) {
         trace.push_back(c);
         Next();
+    }
+    if (auto tag = Token::IsKeyword(trace)) {
+        return MakeToken(tag.value(), std::move(trace));
     }
     return MakeToken(Token::Tag::ID, std::move(trace));
 }
@@ -191,7 +237,36 @@ Lexer::TokenPtr Lexer::ScanString() {
     char c;
     std::string s;
     while ((c = Next()) != '\"' && c != '\0') {
-        s.push_back(c);
+        if (c == '\\') {
+            c = Next();
+            switch (c) {
+                case 'a':
+                    s.push_back('\a'); break;
+                case 'b':
+                    s.push_back('\b'); break;
+                case 'f':
+                    s.push_back('\f'); break;
+                case 'n':
+                    s.push_back('\n'); break;
+                case 'r':
+                    s.push_back('\r'); break;
+                case 't':
+                    s.push_back('\t'); break;
+                case 'v':
+                    s.push_back('\v'); break;
+                case 'x':
+                    s.push_back(ParseHexNum()); break;
+                case '0' ... '9':
+                    s.push_back(ParseOctNum()); break;
+                case '\\': case '\"':
+                    s.push_back(c); break;
+                default:
+                    s.push_back(c);
+                    return MakeToken(Token::Tag::INVALID, std::move(s));
+            }
+        } else {
+            s.push_back(c);
+        }
     }
     if (c == '\0') {
         return MakeToken(Token::Tag::INVALID, "\"" + s);
