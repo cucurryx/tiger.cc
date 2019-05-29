@@ -99,6 +99,10 @@ public:
     Token(Tag tag, const std::string &var):
         tag_(tag), var_(var) {}
 
+    bool operator==(const Token &rhs) {
+        return rhs.tag_ == tag_ && rhs.var_ == var_;
+    }
+
     const std::string Name() const {
         auto node = tag_name_m_.find(tag_);
         assert(node != tag_name_m_.end());
