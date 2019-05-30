@@ -135,4 +135,15 @@ private:
     static const Map<std::string, Tag> keywords_m_;
 };
 
+class Operator {
+public:
+    Operator(std::string &&op_, u64 prec):
+        op_(std::move(op_)),
+        precedence_(prec) {}
+
+private:
+    std::string op_;
+    u64 precedence_;
+};
+
 #endif // TIGER_CC_TOKEN_H
