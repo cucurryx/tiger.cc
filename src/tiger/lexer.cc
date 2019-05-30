@@ -93,6 +93,15 @@ Lexer::TokenPtr Lexer::GetCurrToken() {
     return curr_token_;
 }
 
+// get all tokens
+Lexer::TokenPtrVec Lexer::GetAllTokens() {
+    TokenPtrVec tokens;
+    while (auto ptr = GetNextToken()) {
+        tokens.push_back(ptr);
+    }
+    return tokens;
+}
+
 // return current character and move index to next
 char Lexer::Next() {
     if (index_ < stream_.size()) {
@@ -225,7 +234,7 @@ Lexer::TokenPtr Lexer::ScanComment() {
         }
         comment.push_back(c);
         if (Next() == '/') {
-            comment += "*/";
+            comment += "/";
             return MakeToken(Token::Tag::COMMENT, std::move(comment));
         } else {
             comment.push_back(c);

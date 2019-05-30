@@ -2,18 +2,23 @@
 #define TIGER_CC_LEXER_H
 
 #include "token.h"
+
 #include <memory>
+#include <vector>
 
 class Lexer {
 public:
     using TokenPtr = std::shared_ptr<Token>;
-
+    using TokenPtrVec = std::vector<TokenPtr>;
 public:
     explicit Lexer(std::string &&stream):
+        stream_(stream) {}
+    explicit Lexer(const std::string &stream):
         stream_(stream) {}
 
     TokenPtr GetNextToken();
     TokenPtr GetCurrToken();
+    TokenPtrVec GetAllTokens();
 
 private:
     char Next();
