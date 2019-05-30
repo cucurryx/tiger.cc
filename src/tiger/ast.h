@@ -138,15 +138,36 @@ public:
 };
 
 class BasicVar: public Var {
+public:
+    BasicVar(IdPtr name): name_(std::move(name)) {}
+    ~BasicVar() = default;
 
+private:
+    IdPtr name_;
 };
 
 class FieldVar: public Var {
+public:
+    FieldVar(VarPtr lvar, IdPtr name):
+        lvar_(std::move(lvar)),
+        name_(std::move(name)) {}
+    ~FieldVar() = default;
 
+private:
+    VarPtr lvar_;
+    IdPtr name_;
 };
 
 class ArrayElemVar: public Var {
-
+public:
+    ArrayElemVar(VarPtr lvar, ExprPtr index):
+        lvar_(std::move(lvar)),
+        index_(std::move(index)) {}
+    ~ArrayElemVar() = default;
+    
+private:
+    VarPtr lvar_;
+    ExprPtr index_;
 };
 
 // left value
