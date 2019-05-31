@@ -19,6 +19,7 @@ class Identifier;
 class Type;
 class TypeFields;
 class VarDec;
+class Decs;
 
 /**
  * @brief type
@@ -41,7 +42,7 @@ using TypePtr = std::unique_ptr<Type>;
 using TypePtrVec = std::vector<TypePtr>;
 using TypeFieldsPtr = std::unique_ptr<TypeFields>;
 using VarDecPtr = std::unique_ptr<VarDec>;
-
+using DecsPtr = std::unique_ptr<Decs>;
 
 class Identifier {
 public:
@@ -164,7 +165,7 @@ public:
         lvar_(std::move(lvar)),
         index_(std::move(index)) {}
     ~ArrayElemVar() = default;
-    
+
 private:
     VarPtr lvar_;
     ExprPtr index_;
@@ -311,14 +312,14 @@ private:
 
 class LetExpr: public Expr {
 public:
-    LetExpr(DecPtrVec decs, ExprPtrVec exprs):
+    LetExpr(DecsPtr decs, ExprPtrVec exprs):
         decs_(std::move(decs)),
         exprs_(std::move(exprs)) {}
 
     ~LetExpr() = default;
 
 private:
-    DecPtrVec decs_;
+    DecsPtr decs_;
     ExprPtrVec exprs_;
 };
 
@@ -329,11 +330,10 @@ public:
     virtual ~Dec() = default;
 };
 
-class DecList: public AstNode {
+class Decs: public AstNode {
 public:
-    DecList(DecPtrVec decs):
-        decs_(std::move(decs)) {}
-    ~DecList() = default;
+    Decs(DecPtrVec decs): decs_(std::move(decs)) {}
+    ~Decs() = default;
 
 private:
     DecPtrVec decs_;

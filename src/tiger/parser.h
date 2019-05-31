@@ -8,8 +8,6 @@
 
 class Parser {
 public:
-    using AstNodePtr = std::unique_ptr<AstNode>;
-public:
     Parser(Lexer::TokenPtrVec &&tokens):
         tokens_(std::move(tokens)) {}
 
@@ -19,9 +17,12 @@ private:
     Lexer::TokenPtr NextToken();
     Lexer::TokenPtr CurrToken();
 
+    AstNodePtr ParseMain();
+    AstNodePtr ParseTopExpr();
+    AstNodePtr ParseDecs();
+
 private:
     Lexer::TokenPtrVec tokens_;
-
     u32 index_ {0};
     static std::map<std::string, u64> op_prec_m_;
 };

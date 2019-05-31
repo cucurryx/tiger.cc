@@ -18,7 +18,7 @@ std::map<std::string, u64> op_prec_m_ = {
         {"|", 0},
 };
 
-Parser::AstNodePtr Parser::ParseResult() {
+AstNodePtr Parser::ParseResult() {
     return nullptr;
 }
 
@@ -32,3 +32,34 @@ Lexer::TokenPtr Parser::CurrToken() {
     return tokens_[index_];
 }
 
+// program ::= decs | exp
+AstNodePtr Parser::ParseMain() {
+    auto curr = NextToken();
+    if (curr == nullptr) {
+        return nullptr;
+    }
+
+    auto result = AstNodePtr();
+    switch (curr->Type()) {
+        case Token::Tag::TYPE:
+        case Token::Tag::CLASS:
+        case Token::Tag::FUNCTION:
+        case Token::Tag::PRIMITIVE:
+        case Token::Tag::IMPORT:
+        case Token::Tag::VAR:
+            result = ParseDecs();
+        default:
+            result = ParseTopExpr();
+    }
+    return result;
+}
+
+AstNodePtr Parser::ParseDecs() {
+    auto decs = DecPtrVec();
+
+    return nullptr;
+}
+
+AstNodePtr Parser::ParseTopExpr() {
+    return nullptr;
+}
