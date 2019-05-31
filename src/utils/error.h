@@ -7,13 +7,10 @@
 
 #include <string>
 
-#define PANIC(msg) do {     \
-    Error(msg, __LINE__);   \
+#define PANIC(msg) do {                                        \
+    Error(msg, __LINE__, __FILE__);   \
 } while(0);
 
-void Error(std::string &&msg, int line) {
-    fprintf(stderr, "line %d: %s", line, msg.c_str());
-    exit(1);
-}
+void Error(const char *msg, int line, const char *filename);
 
 #endif //TIGER_CC_ERROR_H

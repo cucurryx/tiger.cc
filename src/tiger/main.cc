@@ -1,15 +1,14 @@
-#include "ast.h"
-#include "lexer.h"
 #include "parser.h"
+#include "../utils/file_reader.h"
 #include "../utils/printer.h"
 
 #include <iostream>
 
 int main() {
-    auto code = "do while list _main ,+- 121212 0/* hello world *****  */a+ \"\\\"he\n\t\"\"llo\" aaa   ";
+    auto reader = FileReader("/Users/xiebei/tiger.cc/examples/example.tig");
+    auto code = reader.ReadAll();
     auto lexer = Lexer(code);
-    auto token = lexer.GetCurrToken();
-    while ((token = lexer.GetNextToken())) {
+    for (auto &token : lexer.GetAllTokens()) {
         std::cout << Printer<Token>::print(*token) << std::endl;
     }
 }

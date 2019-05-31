@@ -169,7 +169,8 @@ u8 Lexer::HexToDigit(char c) {
     } else if (isupper(c)) {
         return c - 'A' + 10;
     } else {
-        PANIC(std::string(1, c) + " is not hex");
+        auto msg = std::string(1, c) + " is not hex";
+        PANIC(msg.c_str());
     }
     return 0;
 }
@@ -178,7 +179,8 @@ u8 Lexer::OctToDigit(char c) {
     if (c >= '0' && c <= '7') {
         return c - '0';
     } else {
-        PANIC(std::string(1, c) + " is not oct");
+        auto msg = std::string(1, c) + " is no oct";
+        PANIC(msg.c_str());
     }
     return 0;
 }
