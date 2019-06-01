@@ -95,6 +95,7 @@ AstNodePtr Parser::ParseMain() {
         default:
             result = ParseTopExpr();
     }
+
     return result;
 }
 
@@ -116,6 +117,7 @@ DecPtr Parser::ParseDec() {
     if (token == nullptr) {
         return nullptr;
     }
+
     switch (token->Type()) {
         case Token::Tag::TYPE:
             dec = ParseTypeDec();
@@ -153,14 +155,17 @@ DecPtr Parser::ParseClassDefA() {
     auto id = Expect(Token::Tag::ID);
     auto name = MakeUnique<Identifier>(id->Value());
     auto parent = TypeIdPtr();
+
     if (CurrIs(Token::Tag::EXTENDS)) {
         NextToken(); // eat 'extends'
         auto p = Expect(Token::Tag::ID);
         parent = MakeUnique<TypeId>(p->Value());
     }
+
     Expect(Token::Tag::LPAREN);
     auto fields = ParseClassFields();
     Expect(Token::Tag::RPAREN);
+
     return MakeUnique<ClassDef>(std::move(name),
             std::move(parent), std::move(fields));
 }
@@ -200,6 +205,7 @@ MethodDecPtr Parser::ParseMethodDec() {
         auto type_id = Expect(Token::Tag::ID);
         ret = MakeUnique<TypeId>(type_id->Value());
     }
+
     Expect(Token::Tag::EQ);
     auto body = ParseTopExpr();
     return MakeUnique<MethodDec>(std::move(name), std::move(args),
@@ -215,10 +221,12 @@ VarDecPtr Parser::ParseVarDec() {
     auto id = Expect(Token::Tag::ID);
     auto name = MakeUnique<Identifier>(id->Value());
     auto type = TypeIdPtr();
+
     if (CurrIs(Token::Tag::COLON)) {
         auto type_id = Expect(Token::Tag::ID);
         type = MakeUnique<TypeId>(type_id->Value());
     }
+
     Expect(Token::Tag::ASSIGN);
     auto body = ParseTopExpr();
     return MakeUnique<VarDec>(
@@ -228,15 +236,19 @@ VarDecPtr Parser::ParseVarDec() {
 FnDecPtr Parser::ParseFnDec() {
     auto id = Expect(Token::Tag::ID);
     auto name = MakeUnique<Identifier>(id->Value());
+
     Expect(Token::Tag::LPAREN);
     auto args = ParseTypeFields();
+
     Expect(Token::Tag::RPAREN);
     auto ret = TypeIdPtr();
+
     if (CurrIs(Token::Tag::COLON)) {
         auto type_id = Expect(Token::Tag::ID);
         ret = MakeUnique<TypeId>(type_id->Value());
     }
     Expect(Token::Tag::EQ);
+
     auto body = ParseTopExpr();
     return MakeUnique<FnDec>(std::move(name), std::move(args),
             std::move(ret), std::move(body));
@@ -246,13 +258,16 @@ PrimDecPtr Parser::ParsePrimDec() {
     auto id = Expect(Token::Tag::ID);
     auto name = MakeUnique<Identifier>(id->Value());
     Expect(Token::Tag::LPAREN);
+
     auto args = ParseTypeFields();
     Expect(Token::Tag::RPAREN);
+
     auto ret = TypeIdPtr();
     if (CurrIs(Token::Tag::COLON)) {
         auto type_id = Expect(Token::Tag::ID);
         ret = MakeUnique<TypeId>(type_id->Value());
     }
+
     return MakeUnique<PrimDec>(std::move(name),
             std::move(args), std::move(ret));
 }
@@ -266,6 +281,7 @@ TypePtr Parser::ParseType() {
     if (curr == nullptr) {
         PANIC("current token is null")
     }
+
     switch (curr->Type()) {
         case Token::Tag::LBRACE:
             return ParseRecordDef();
@@ -278,6 +294,7 @@ TypePtr Parser::ParseType() {
         default:
             PANIC("current token's type is not valid")
     }
+
     return nullptr; // dead code
 }
 
@@ -303,9 +320,11 @@ ClassTypeDefPtr Parser::ParseClassTypeDef() {
     if (Try(Token::Tag::EXTENDS)) {
         parent = MakeUnique<TypeId>(Expect(Token::Tag::ID)->Value());
     }
+
     Expect(Token::Tag::LBRACE);
     auto fields = ParseClassFields();
     Expect(Token::Tag::RBRACE);
+
     return MakeUnique<ClassTypeDef>(std::move(parent), std::move(fields));
 }
 
