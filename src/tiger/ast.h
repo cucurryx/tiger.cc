@@ -15,19 +15,30 @@ class Expr;
 class Dec;
 class Var;
 class ClassField;
+class ClassFields;
 class Identifier;
 class Type;
+class TypeId;
 class TypeFields;
 class VarDec;
 class Decs;
+class MethodDec;
+class AttrDec;
+class FnDec;
+class PrimDec;
+class ImportDec;
+class TypeAlias;
+class RecordDef;
+class ArrayDef;
+class ClassDef;
+class ClassTypeDef;
 
 /**
  * @brief type
  */
-using TypeId = Identifier;
 using IdPtr = std::unique_ptr<Identifier>;
 using IdPtrVec = std::vector<IdPtr>;
-using TypeIdPtr = IdPtr;
+using TypeIdPtr = std::unique_ptr<TypeId>;
 using TypeIdPtrVec = std::vector<TypeIdPtr>;
 using AstNodePtr = std::unique_ptr<AstNode>;
 using ExprPtr = std::unique_ptr<Expr>;
@@ -38,15 +49,34 @@ using DecPtrVec = std::vector<DecPtr>;
 using ClassFieldPtrVec = std::vector<ClassFieldPtr>;
 using VarPtr = std::unique_ptr<Var>;
 using OperatorPtr = std::unique_ptr<Operator>;
-using TypePtr = std::unique_ptr<Type>;
-using TypePtrVec = std::vector<TypePtr>;
 using TypeFieldsPtr = std::unique_ptr<TypeFields>;
 using VarDecPtr = std::unique_ptr<VarDec>;
 using DecsPtr = std::unique_ptr<Decs>;
+using ClassFieldsPtr = std::unique_ptr<ClassFields>;
+using MethodDecPtr = std::unique_ptr<MethodDec>;
+using AttrDecPtr = std::unique_ptr<AttrDec>;
+using FnDecPtr = std::unique_ptr<FnDec>;
+using PrimDecPtr = std::unique_ptr<PrimDec>;
+using ImportDecPtr = std::unique_ptr<ImportDec>;
+
+// types
+using TypePtr = std::unique_ptr<Type>;
+using TypePtrVec = std::vector<TypePtr>;
+using TypeAliasPtr = std::unique_ptr<TypeAlias>;
+using RecordDefPtr = std::unique_ptr<RecordDef>;
+using ClassTypeDefPtr = std::unique_ptr<ClassTypeDef>;
+using ArrayDefPtr = std::unique_ptr<ArrayDef>;
 
 class Identifier {
 public:
-    Identifier(std::string name): name_(std::move(name)) {}
+    explicit Identifier(std::string name): name_(std::move(name)) {}
+private:
+    std::string name_;
+};
+
+class TypeId {
+public:
+    explicit TypeId(std::string name): name_(std::move(name)) {}
 private:
     std::string name_;
 };
@@ -357,8 +387,8 @@ private:
 class ClassDef: public Dec {
 public:
     ClassDef(IdPtr name,
-            TypeIdPtr parent, 
-            ClassFieldPtrVec fields):
+            TypeIdPtr parent,
+            ClassFieldsPtr fields):
         name_(std::move(name)),
         parent_(std::move(parent)),
         fields_(std::move(fields)) {}
@@ -368,7 +398,7 @@ public:
 private:
     IdPtr name_;
     TypeIdPtr parent_;
-    ClassFieldPtrVec fields_;
+    ClassFieldsPtr fields_;
 };
 
 // variable declaration
@@ -439,6 +469,16 @@ public:
     virtual ~ClassField() = default;
 };
 
+class ClassFields: public AstNode {
+public:
+    explicit ClassFields(ClassFieldPtrVec fields):
+        fields_(std::move(fields)) {}
+    ~ClassFields() = default;
+
+private:
+    ClassFieldPtrVec fields_;
+};
+
 // class field: attribute declaration 
 class AttrDec: public ClassField {
 public:
@@ -484,20 +524,20 @@ private:
     TypeIdPtr alias_;
 };
 
-class RecordTypeDef: public Type {
+class RecordDef: public Type {
 public:
-    RecordTypeDef(TypeFieldsPtr records):
+    RecordDef(TypeFieldsPtr records):
         records_(std::move(records)) {}
-    ~RecordTypeDef() = default;
+    ~RecordDef() = default;
 private:
     TypeFieldsPtr records_;
 };
 
-class ArrayTypeDef: public Type {
+class ArrayDef: public Type {
 public:
-    ArrayTypeDef(TypeIdPtr type):
+    ArrayDef(TypeIdPtr type):
         type_(std::move(type)) {}
-    ~ArrayTypeDef() = default;
+    ~ArrayDef() = default;
 private:
     TypeIdPtr type_;
 };
@@ -505,7 +545,7 @@ private:
 // class definition(canonical form)
 class ClassTypeDef: public Type {
 public:
-    ClassTypeDef(TypeIdPtr parent, ClassFieldPtrVec fields):
+    ClassTypeDef(TypeIdPtr parent, ClassFieldsPtr fields):
         parent_(std::move(parent)),
         fields_(std::move(fields)) {}
         
@@ -513,7 +553,7 @@ public:
     
 private:
     TypeIdPtr parent_;
-    ClassFieldPtrVec fields_;
+    ClassFieldsPtr fields_;
 };
 
 // type fields
@@ -521,7 +561,9 @@ class TypeFields: public AstNode {
 public:
     TypeFields(IdPtrVec names, TypeIdPtrVec types):
         names_(std::move(names)),
-        types_(std::move(types)) {}
+        types_(std::move(types)) {
+        assert(names_.size() == types_.size());
+    }
     ~TypeFields() = default;
 
 private:

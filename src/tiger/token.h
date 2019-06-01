@@ -11,11 +11,13 @@ template <typename K, typename V>
 using Map = std::unordered_map<K, V>;
 
 class Lexer;
+class Parser;
 
 class Token {
 public:
     friend class Lexer;
-    
+    friend class Parser;
+
 public:
     enum class Tag {
         // keywords
@@ -60,7 +62,7 @@ public:
         MINUS,      // -
         STAR,       // *
         DIV,        // /
-        EQUA,       // =
+        EQ,       // =
         NOT_EQAL,   // <>
         LESS,       // <
         GREATER,    // >
@@ -114,6 +116,9 @@ public:
     }
 
     const std::string Value() const {
+        if (tag_ == Tag::EOL) {
+            return "\\r\\n";
+        }
         return var_;
     }
 

@@ -44,7 +44,7 @@ Lexer::TokenPtr Lexer::GetNextToken() {
                 return MakeToken(Token::Tag::DIV, "/");
             }
         case '=':
-            return MakeToken(Token::Tag::EQUA, "=");
+            return MakeToken(Token::Tag::EQ, "=");
         case '<':
             if (Try('=')) {
                 return MakeToken(Token::Tag::LEQ, "<=");

@@ -38,7 +38,7 @@ const Map<Token::Tag, std::string> Token::tag_name_m_ {
     { Token::Tag::MINUS, "minus" },
     { Token::Tag::STAR, "star" },
     { Token::Tag::DIV, "div" },
-    { Token::Tag::EQUA, "equal" },
+    { Token::Tag::EQ, "equal" },
     { Token::Tag::NOT_EQAL, "not equal" },
     { Token::Tag::LESS, "less" },
     { Token::Tag::GREATER, "greater" },
