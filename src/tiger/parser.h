@@ -14,7 +14,7 @@ public:
     }
 
 public:
-    Parser(Lexer::TokenPtrVec &&tokens):
+    explicit Parser(Lexer::TokenPtrVec &&tokens):
         tokens_(std::move(tokens)) {}
 
     AstNodePtr ParseResult();
@@ -24,14 +24,52 @@ private:
     Lexer::TokenPtr CurrToken();
     Lexer::TokenPtr Expect(Token::Tag tag);
     Lexer::TokenPtr NotNullNext();
+    Lexer::TokenPtr PeekNext();
     bool CurrIs(Token::Tag tag);
     bool Try(Token::Tag tag);
-
+    bool IsOperator(Token::Tag tag);
 
     AstNodePtr ParseMain();
-
     // expressions
     ExprPtr ParseTopExpr();
+    PrimeExprPtr ParsePrimeExpr();
+    UnaryExprPtr ParseUnaryExpr();
+
+    // literal expressions
+    NilExprPtr ParseNilExpr();
+    IntExprPtr ParseIntExpr();
+    StrExprPtr ParseStrExpr();
+
+    // array and recored creation expressions
+    ArrayCreatePtr ParseArrayCrt();
+    RecordCreatePtr ParseRecordCrt();
+
+    // object creation expressions
+    ObjCreatePtr ParseObjCrt();
+
+    //left values
+    VarPtr ParseVar();
+    VarAPtr ParseVarA();
+    VarExprPtr ParseVarExpr();
+    BasicVarPtr ParseBasicVar();
+    ArrayElemVarPtr ParseArrayElem();
+    FieldVarPtr ParseFieldVar();
+
+    // function and method call
+    FnCallPtr ParseFnCall();
+    MethodCallPtr ParseMethodCall();
+
+    // operations and assignment
+    OpExprPtr ParseOpExpr();
+    AssignExprPtr ParseAssignExpr();
+
+    // control expressions
+    IfExprPtr ParseIf();
+    WhileExprPtr ParseWhile();
+    ForExprPtr ParseFor();
+    BreakExprPtr ParseBreak();
+    LetExprPtr ParseLet();
+    ExprsExprPtr ParseExprs();
 
     // declarations
     DecsPtr ParseDecs();
@@ -54,7 +92,6 @@ private:
     RecordDefPtr ParseRecordDef();
     ArrayDefPtr ParseArrayDef();
     ClassTypeDefPtr ParseClassTypeDef();
-
 
 private:
     Lexer::TokenPtrVec tokens_;

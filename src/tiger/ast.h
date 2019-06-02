@@ -12,8 +12,11 @@
  */
 class AstNode;
 class Expr;
+class Operator;
+class PrimeExpr;
 class Dec;
 class Var;
+class VarA;
 class ClassField;
 class ClassFields;
 class Identifier;
@@ -32,9 +35,32 @@ class RecordDef;
 class ArrayDef;
 class ClassDef;
 class ClassTypeDef;
+class NilExpr;
+class IntExpr;
+class StrExpr;
+class ObjCreate;
+class ArrayCreate;
+class RecordCreate;
+class BasicVar;
+class FieldVar;
+class ArrayElemVar;
+class FnCall;
+class MethodCall;
+class OpExpr;
+class AssignExpr;
+class IfExpr;
+class WhileExpr;
+class ForExpr;
+class BreakExpr;
+class LetExpr;
+class Exprs;
+class VarExpr;
+class ExprsExpr;
+class UnaryExpr;
 
 /**
- * @brief type
+ * @brief type. Although using macro can make these
+ * `using and pre-declaration` shorter, I don't like it.
  */
 using IdPtr = std::unique_ptr<Identifier>;
 using IdPtrVec = std::vector<IdPtr>;
@@ -42,12 +68,14 @@ using TypeIdPtr = std::unique_ptr<TypeId>;
 using TypeIdPtrVec = std::vector<TypeIdPtr>;
 using AstNodePtr = std::unique_ptr<AstNode>;
 using ExprPtr = std::unique_ptr<Expr>;
+using PrimeExprPtr = std::unique_ptr<PrimeExpr>;
 using DecPtr = std::unique_ptr<Dec>;
 using ClassFieldPtr = std::unique_ptr<ClassField>;
 using ExprPtrVec = std::vector<ExprPtr>;
 using DecPtrVec = std::vector<DecPtr>;
 using ClassFieldPtrVec = std::vector<ClassFieldPtr>;
 using VarPtr = std::unique_ptr<Var>;
+using VarAPtr = std::unique_ptr<VarA>;
 using OperatorPtr = std::unique_ptr<Operator>;
 using TypeFieldsPtr = std::unique_ptr<TypeFields>;
 using VarDecPtr = std::unique_ptr<VarDec>;
@@ -58,6 +86,31 @@ using AttrDecPtr = std::unique_ptr<AttrDec>;
 using FnDecPtr = std::unique_ptr<FnDec>;
 using PrimDecPtr = std::unique_ptr<PrimDec>;
 using ImportDecPtr = std::unique_ptr<ImportDec>;
+using NilExprPtr = std::unique_ptr<NilExpr>;
+using IntExprPtr = std::unique_ptr<IntExpr>;
+using StrExprPtr = std::unique_ptr<StrExpr>;
+using ObjCreatePtr = std::unique_ptr<ObjCreate>;
+using RecordCreatePtr = std::unique_ptr<RecordCreate>;
+using ArrayCreatePtr = std::unique_ptr<ArrayCreate>;
+using BasicVarPtr = std::unique_ptr<BasicVar>;
+using ArrayElemVarPtr = std::unique_ptr<ArrayElemVar>;
+using FieldVarPtr = std::unique_ptr<FieldVar>;
+using FnCallPtr = std::unique_ptr<FnCall>;
+using MethodCallPtr = std::unique_ptr<MethodCall>;
+using OpExprPtr = std::unique_ptr<OpExpr>;
+using OpExprPtrVec = std::vector<OpExprPtr>;
+using AssignExprPtr = std::unique_ptr<AssignExpr>;
+using IfExprPtr = std::unique_ptr<IfExpr>;
+using WhileExprPtr = std::unique_ptr<WhileExpr>;
+using ForExprPtr = std::unique_ptr<ForExpr>;
+using BreakExprPtr = std::unique_ptr<BreakExpr>;
+using LetExprPtr = std::unique_ptr<LetExpr>;
+using ExprsPtr = std::unique_ptr<Exprs>;
+using VarExprPtr = std::unique_ptr<VarExpr>;
+using ExprsExprPtr = std::unique_ptr<ExprsExpr>;
+using OpPtr = std::unique_ptr<Operator>;
+using OpPtrVec = std::vector<OpPtr>;
+using UnaryExprPtr = std::unique_ptr<UnaryExpr>;
 
 // types
 using TypePtr = std::unique_ptr<Type>;
@@ -67,11 +120,24 @@ using RecordDefPtr = std::unique_ptr<RecordDef>;
 using ClassTypeDefPtr = std::unique_ptr<ClassTypeDef>;
 using ArrayDefPtr = std::unique_ptr<ArrayDef>;
 
+/**
+ * @brief id
+ */
 class Identifier {
 public:
     explicit Identifier(std::string name): name_(std::move(name)) {}
 private:
     std::string name_;
+};
+
+class Operator {
+public:
+    Operator(std::string op_): op_(std::move(op_)) {}
+    ~Operator() = default;
+
+private:
+    std::string op_;
+    u64 precedence_;
 };
 
 class TypeId {
@@ -89,19 +155,36 @@ public:
 
 class Expr: public AstNode {
 public:
-    Expr() = default;
-    virtual ~Expr() = default;
+    Expr(PrimeExprPtr left, OpPtrVec ops, ExprPtrVec rights):
+        left_(std::move(left)),
+        ops_(std::move(ops)),
+        rights_(std::move(rights)) {
+        assert(ops_.size() == rights_.size());
+    }
+    
+    ~Expr() = default;
+
+private:
+    PrimeExprPtr left_;
+    OpPtrVec ops_;
+    ExprPtrVec rights_;
+};
+
+class PrimeExpr: public AstNode {
+public:
+    PrimeExpr() = default;
+    virtual ~PrimeExpr() = default;
 };
 
 // nil expression
-class NilExpr: public Expr {
+class NilExpr: public PrimeExpr {
 public:
     NilExpr() = default;
     ~NilExpr() = default;
 };
 
 // integer expression
-class IntExpr: public Expr {
+class IntExpr: public PrimeExpr {
 public:
     IntExpr(i64 num): num_(num) {}
     ~IntExpr() = default;
@@ -110,10 +193,22 @@ private:
     i64 num_;
 };
 
-// string expression
-class StrExpr: public Expr {
+// unary expression
+class UnaryExpr: public PrimeExpr {
 public:
-    StrExpr(std::string &&s): str_(std::move(s)) {}
+    UnaryExpr(OpPtr op, ExprPtr expr):
+        op_(std::move(op)), expr_(std::move(expr)) {}
+    ~UnaryExpr() = default;
+
+private:
+    OpPtr op_;
+    ExprPtr expr_;
+};
+
+// string expression
+class StrExpr: public PrimeExpr {
+public:
+    StrExpr(std::string s): str_(std::move(s)) {}
     ~StrExpr() = default;
 
 private:
@@ -121,14 +216,14 @@ private:
 };
 
 // array creation
-class ArrayCreateAst: public Expr {
+class ArrayCreate: public PrimeExpr {
 public:
-    ArrayCreateAst(TypeIdPtr type_id, ExprPtr len, ExprPtr init):
+    ArrayCreate(TypeIdPtr type_id, ExprPtr len, ExprPtr init):
         type_id_(std::move(type_id)),
         len_(std::move(len)),
         init_(std::move(init)) {}
 
-    ~ArrayCreateAst() = default;
+    ~ArrayCreate() = default;
 
 private:
     TypeIdPtr type_id_;
@@ -136,16 +231,16 @@ private:
     ExprPtr init_;
 };
 
-class RecordCreateAst: public Expr {
+class RecordCreate: public PrimeExpr {
 public:
-    RecordCreateAst(TypeIdPtr type_id, TypeIdPtrVec types, ExprPtrVec vars):
+    RecordCreate(TypeIdPtr type_id, TypeIdPtrVec types, ExprPtrVec vars):
         type_id_(std::move(type_id)),
         types_(std::move(types)),
         vars_(std::move(vars)) {
         assert(types_.size() == vars_.size());
     }
 
-    ~RecordCreateAst() = default;
+    ~RecordCreate() = default;
 
 private:
     TypeIdPtr type_id_;
@@ -153,10 +248,10 @@ private:
     ExprPtrVec vars_;
 };
 
-class ObjCreateAst: public Expr {
+class ObjCreate: public PrimeExpr {
 public:
-    ObjCreateAst(TypeIdPtr type_id): type_id_(std::move(type_id)) {}
-    ~ObjCreateAst() = default;
+    ObjCreate(TypeIdPtr type_id): type_id_(std::move(type_id)) {}
+    ~ObjCreate() = default;
 
 private:
     TypeIdPtr type_id_;
@@ -164,45 +259,53 @@ private:
 
 class Var: public AstNode {
 public:
-    Var() = default;
-    virtual ~Var() = default;
-};
-
-class BasicVar: public Var {
-public:
-    BasicVar(IdPtr name): name_(std::move(name)) {}
-    ~BasicVar() = default;
+    Var(IdPtr id, VarAPtr rhs): 
+        id_(std::move(id)), rhs_(std::move(rhs)) {}
+    ~Var() = default;
 
 private:
-    IdPtr name_;
+    IdPtr id_;
+    VarAPtr rhs_;
 };
 
-class FieldVar: public Var {
+class VarA: public AstNode {
 public:
-    FieldVar(VarPtr lvar, IdPtr name):
+    VarA() = default;
+    virtual ~VarA() = default;
+};
+
+class BasicVar: public VarA {
+public:
+    BasicVar() = default;
+    ~BasicVar() = default;
+};
+
+class FieldVar: public VarA {
+public:
+    FieldVar(VarAPtr lvar, IdPtr name):
         lvar_(std::move(lvar)),
         name_(std::move(name)) {}
     ~FieldVar() = default;
 
 private:
-    VarPtr lvar_;
+    VarAPtr lvar_;
     IdPtr name_;
 };
 
-class ArrayElemVar: public Var {
+class ArrayElemVar: public VarA {
 public:
-    ArrayElemVar(VarPtr lvar, ExprPtr index):
+    ArrayElemVar(VarAPtr lvar, ExprPtr index):
         lvar_(std::move(lvar)),
         index_(std::move(index)) {}
     ~ArrayElemVar() = default;
 
 private:
-    VarPtr lvar_;
+    VarAPtr lvar_;
     ExprPtr index_;
 };
 
 // left value
-class VarExpr: public Expr {
+class VarExpr: public PrimeExpr {
 public:
     VarExpr(VarPtr var): lvar_(std::move(var)) {}
     ~VarExpr() = default;
@@ -211,27 +314,27 @@ private:
     VarPtr lvar_;
 };
 
-class FnCallAst: public Expr {
+class FnCall: public PrimeExpr {
 public:
-    FnCallAst(IdPtr name, ExprPtrVec args):
+    FnCall(IdPtr name, ExprPtrVec args):
         name_(std::move(name)),
         args_(std::move(args)) {}
 
-    ~FnCallAst() = default;
+    ~FnCall() = default;
 
 private:
     IdPtr name_;
     ExprPtrVec args_;
 };
 
-class MethodCallAst: public Expr {
+class MethodCall: public PrimeExpr {
 public:
-    MethodCallAst(VarPtr lvar, IdPtr method, ExprPtrVec args):
+    MethodCall(VarPtr lvar, IdPtr method, ExprPtrVec args):
         lvar_(std::move(lvar)),
         method_(std::move(method)),
         args_(std::move(args)) {}
 
-    ~MethodCallAst() = default;
+    ~MethodCall() = default;
 
 private:
     VarPtr lvar_;
@@ -239,7 +342,7 @@ private:
     ExprPtrVec args_;
 };
 
-class OpExpr: public Expr {
+class OpExpr: public PrimeExpr {
 public:
     OpExpr(OperatorPtr op, ExprPtr lhs, ExprPtr rhs):
         op_(std::move(op)),
@@ -254,18 +357,27 @@ private:
     ExprPtr rhs_;
 };
 
-class ExprsAst: public Expr {
+class Exprs {
 public:
-    ExprsAst(ExprPtrVec exprs):
+    Exprs(ExprPtrVec exprs):
         exprs_(std::move(exprs)) {}
 
-    ~ExprsAst() = default;
+    ~Exprs() = default;
 
 private:
     ExprPtrVec exprs_;
 };
 
-class AssignExpr: public Expr {
+class ExprsExpr: public PrimeExpr {
+public:
+    explicit ExprsExpr(ExprsPtr exprs): exprs_(std::move(exprs)) {}
+    ~ExprsExpr() = default;
+
+private:
+    ExprsPtr exprs_;
+};
+
+class AssignExpr: public PrimeExpr {
 public:
     AssignExpr(VarPtr lvar, ExprPtr expr):
         lval_(std::move(lvar)),
@@ -278,7 +390,7 @@ private:
     ExprPtr expr_;
 };
 
-class IfExpr: public Expr {
+class IfExpr: public PrimeExpr {
 public:
     IfExpr(ExprPtr _if, ExprPtr _then, ExprPtr _else):
         if_(std::move(_if)),
@@ -293,7 +405,7 @@ private:
     ExprPtr else_;
 };
 
-class WhileExpr: public Expr {
+class WhileExpr: public PrimeExpr {
 public:
     WhileExpr(ExprPtr _while, ExprPtr _do):
         while_(std::move(_while)),
@@ -306,7 +418,7 @@ private:
     ExprPtr do_;
 };
 
-class ForExpr: public Expr {
+class ForExpr: public PrimeExpr {
 public:
     ForExpr(IdPtr id, ExprPtr from, ExprPtr to, ExprPtr _do):
         id_(std::move(id)),
@@ -323,26 +435,15 @@ private:
     ExprPtr do_;
 };
 
-class BreakExpr: public Expr {
+class BreakExpr: public PrimeExpr {
 public:
     BreakExpr() = default;
     ~BreakExpr() = default;
 };
 
-class ExprList: public AstNode {
+class LetExpr: public PrimeExpr {
 public:
-    ExprList(ExprPtrVec exprs):
-        exprs_(std::move(exprs)) {}
-
-    ~ExprList() = default;
-
-private:
-    ExprPtrVec exprs_;
-};
-
-class LetExpr: public Expr {
-public:
-    LetExpr(DecsPtr decs, ExprPtrVec exprs):
+    LetExpr(DecsPtr decs, ExprsExprPtr exprs):
         decs_(std::move(decs)),
         exprs_(std::move(exprs)) {}
 
@@ -350,7 +451,7 @@ public:
 
 private:
     DecsPtr decs_;
-    ExprPtrVec exprs_;
+    ExprsExprPtr exprs_;
 };
 
 // decs

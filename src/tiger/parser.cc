@@ -1,6 +1,8 @@
 #include "parser.h"
 #include "../utils/error.h"
 
+#include <string>
+
 // mapping operator to it's precedence.
 // comparison operators are not associative,
 // others are left-associative
@@ -47,6 +49,14 @@ Lexer::TokenPtr Parser::NotNullNext() {
     return curr;
 }
 
+// peek the next token
+Lexer::TokenPtr Parser::PeekNext() {
+    if (index_ + 1 >= tokens_.size()) {
+        return nullptr;
+    }
+    return tokens_[index_+1];
+}
+
 // expect current token's type is tag
 Lexer::TokenPtr Parser::Expect(Token::Tag tag) {
     if (CurrToken() == nullptr) {
@@ -69,7 +79,8 @@ bool Parser::CurrIs(Token::Tag tag) {
 // if current token's type is tag, eat current token and return true
 // else return false.
 bool Parser::Try(Token::Tag tag) {
-    if (CurrIs(tag)) {
+    if (CurrToken() != nullptr &&
+        CurrToken()->Type() == tag) {
         NextToken();
         return true;
     }
@@ -349,5 +360,277 @@ TypeFieldsPtr Parser::ParseTypeFields() {
 }
 
 ExprPtr Parser::ParseTopExpr() {
-    return nullptr;
+    auto left = ParsePrimeExpr();
+    auto ops = OpPtrVec();
+    auto rights = ExprPtrVec();
+    auto curr = CurrToken();
+
+    while ((curr = CurrToken()) != nullptr) {
+        if (!curr->IsOperator()) {
+            PANIC("expect operator in expr")
+        }
+        NextToken();
+        auto rhs = ParseTopExpr();
+        if (rhs == nullptr) {
+            PANIC("right expr can't be null");
+        }
+        auto op_ptr = MakeUnique<Operator>(curr->Value());
+        ops.push_back(std::move(op_ptr));
+        rights.push_back(std::move(rhs));
+    }
+    return MakeUnique<Expr>(std::move(left),
+            std::move(ops), std::move(rights));
+}
+
+PrimeExprPtr Parser::ParsePrimeExpr() {
+    auto curr = CurrToken();
+    if (curr == nullptr) {
+        PANIC("expression can't be empty")
+    }
+    switch (curr->Type()) {
+        case Token::Tag::NIL:
+            return ParseNilExpr();
+        case Token::Tag::NUM:
+            return ParseIntExpr();
+        case Token::Tag::STR:
+            return ParseStrExpr();
+        case Token::Tag::NEW:
+            return ParseObjCrt();
+        case Token::Tag::MINUS:
+            return ParseUnaryExpr();
+        case Token::Tag::LPAREN:
+            return ParseExprs();
+        case Token::Tag::IF:
+            return ParseIf();
+        case Token::Tag::WHILE:
+            return ParseWhile();
+        case Token::Tag::FOR:
+            return ParseFor();
+        case Token::Tag::BREAK:
+            return ParseBreak();
+        case Token::Tag::LET:
+            return ParseLet();
+        case Token::Tag::ID: {
+            auto next = PeekNext();
+            switch (next->Type()) {
+                case Token::Tag::LBRACE:
+                    return ParseRecordCrt();
+                case Token::Tag::LSQUB:
+                    return ParseArrayCrt();
+                case Token::Tag::LPAREN:
+                    return ParseFnCall();
+                case Token::Tag::DOT:
+                    return ParseVarExpr();
+                default: {
+                    return ParseVarExpr();
+                }
+            }
+        }
+        default:
+            PANIC("invalid token")
+    }
+    return PrimeExprPtr();
+}
+
+NilExprPtr Parser::ParseNilExpr() {
+    Expect(Token::Tag::NIL);
+    return MakeUnique<NilExpr>();
+}
+
+IntExprPtr Parser::ParseIntExpr() {
+    auto t = Expect(Token::Tag::NUM);
+    auto num = std::stoi(t->Value());
+    return MakeUnique<IntExpr>(num);
+}
+
+StrExprPtr Parser::ParseStrExpr() {
+    auto t = Expect(Token::Tag::STR);
+    return MakeUnique<StrExpr>(t->Value());
+}
+
+ArrayCreatePtr Parser::ParseArrayCrt() {
+    auto type_id = Expect(Token::Tag::ID);
+    auto type = MakeUnique<TypeId>(type_id->Value());
+    auto lsqb = Expect(Token::Tag::LSQUB);
+    auto size = ParseTopExpr();
+    auto rsqb = Expect(Token::Tag::RSQUB);
+    auto of = Expect(Token::Tag::OF);
+    auto init = ParseTopExpr();
+
+    return MakeUnique<ArrayCreate>(std::move(type),
+            std::move(size), std::move(init));
+}
+
+RecordCreatePtr Parser::ParseRecordCrt() {
+    auto type_id = Expect(Token::Tag::ID);
+    auto type = MakeUnique<TypeId>(type_id->Value());
+    auto field_names = TypeIdPtrVec();
+    auto field_vars = ExprPtrVec();
+
+    Expect(Token::Tag::LBRACE);
+    if (CurrIs(Token::Tag::ID)) {
+        do {
+            auto id = CurrToken();
+            auto name = MakeUnique<TypeId>(id->Value());
+            auto _ = Expect(Token::Tag::EQ);
+            auto exp = ParseTopExpr();
+
+            field_names.push_back(std::move(name));
+            field_vars.push_back(std::move(exp));
+
+        } while (Try(Token::Tag::COMMA));
+    }
+    Expect(Token::Tag::RBRACE);
+
+    return MakeUnique<RecordCreate>(std::move(type),
+            std::move(field_names), std::move(field_vars));
+}
+
+ObjCreatePtr Parser::ParseObjCrt() {
+    Expect(Token::Tag::NEW);
+    auto type_id = Expect(Token::Tag::ID);
+    auto type = MakeUnique<TypeId>(type_id->Value());
+    return MakeUnique<ObjCreate>(std::move(type));
+}
+
+VarPtr Parser::ParseVar() {
+    auto id = Expect(Token::Tag::ID);
+    auto lhs = MakeUnique<Identifier>(id->Value());
+    auto rhs = ParseVarA();
+    return MakeUnique<Var>(std::move(lhs), std::move(rhs));
+}
+
+BasicVarPtr Parser::ParseBasicVar() {
+    return MakeUnique<BasicVar>();
+}
+
+ArrayElemVarPtr Parser::ParseArrayElem() {
+    Expect(Token::Tag::LSQUB);
+    auto index = ParseTopExpr();
+    Expect(Token::Tag::RSQUB);
+    auto rhs = ParseVarA();
+    return MakeUnique<ArrayElemVar>(std::move(rhs), std::move(index));
+}
+
+FieldVarPtr Parser::ParseFieldVar() {
+    Expect(Token::Tag::DOT);
+    auto id = Expect(Token::Tag::ID);
+    auto name = MakeUnique<Identifier>(id->Value());
+    auto rhs = ParseVarA();
+    return MakeUnique<FieldVar>(std::move(rhs), std::move(name));
+}
+
+FnCallPtr Parser::ParseFnCall() {
+    auto id = Expect(Token::Tag::ID);
+    auto fn_name = MakeUnique<Identifier>(id->Value());
+    Expect(Token::Tag::LPAREN);
+    auto args = ExprPtrVec();
+
+   if (!CurrIs(Token::Tag::RPAREN)) {
+       do {
+           args.push_back(ParseTopExpr());
+       } while (Try(Token::Tag::COMMA));
+   }
+   Expect(Token::Tag::RPAREN);
+
+   return MakeUnique<FnCall>(std::move(fn_name), std::move(args));
+}
+
+// TODO
+MethodCallPtr Parser::ParseMethodCall() {
+    return MethodCallPtr();
+}
+
+// TODO
+OpExprPtr Parser::ParseOpExpr() {
+    return OpExprPtr();
+}
+
+AssignExprPtr Parser::ParseAssignExpr() {
+    return AssignExprPtr();
+}
+
+IfExprPtr Parser::ParseIf() {
+    Expect(Token::Tag::IF);
+    auto cond = ParseTopExpr();
+    Expect(Token::Tag::THEN);
+    auto then = ParseTopExpr();
+    auto else_ = ExprPtr();
+    if (Try(Token::Tag::ELSE)) {
+        else_ = ParseTopExpr();
+    }
+    return MakeUnique<IfExpr>(
+            std::move(cond),
+            std::move(then),
+            std::move(else_));
+}
+
+WhileExprPtr Parser::ParseWhile() {
+    Expect(Token::Tag::WHILE);
+    auto cond = ParseTopExpr();
+    Expect(Token::Tag::DO);
+    auto body = ParseTopExpr();
+    return MakeUnique<WhileExpr>(std::move(cond), std::move(body));
+}
+
+ForExprPtr Parser::ParseFor() {
+    Expect(Token::Tag::FOR);
+    auto name = MakeUnique<Identifier>(Expect(Token::Tag::ID)->Value());
+    Expect(Token::Tag::ASSIGN);
+    auto from = ParseTopExpr();
+    Expect(Token::Tag::TO);
+    auto to = ParseTopExpr();
+    Expect(Token::Tag::DO);
+    auto body = ParseTopExpr();
+    return MakeUnique<ForExpr>(
+            std::move(name),
+            std::move(from),
+            std::move(to),
+            std::move(body));
+}
+
+BreakExprPtr Parser::ParseBreak() {
+    Expect(Token::Tag::BREAK);
+    return MakeUnique<BreakExpr>();
+}
+
+LetExprPtr Parser::ParseLet() {
+    Expect(Token::Tag::LET);
+    auto decs = ParseDecs();
+    Expect(Token::Tag::IN);
+    auto exps = ParseExprs();
+    Expect(Token::Tag::END);
+    return MakeUnique<LetExpr>(std::move(decs), std::move(exps));
+}
+
+ExprsExprPtr Parser::ParseExprs() {
+    auto exps = ExprPtrVec();
+    do {
+        exps.push_back(ParseTopExpr());
+    } while (Try(Token::Tag::COLON));
+    return MakeUnique<ExprsExpr>(MakeUnique<Exprs>(std::move(exps)));
+}
+
+VarAPtr Parser::ParseVarA() {
+    if (CurrToken() == nullptr) {
+        return ParseBasicVar();
+    }
+    if (CurrIs(Token::Tag::DOT)) {
+        return ParseFieldVar();
+    }
+    if (CurrIs(Token::Tag::LSQUB)) {
+        return ParseArrayElem();
+    }
+    PANIC("no match var parse")
+}
+
+VarExprPtr Parser::ParseVarExpr() {
+    return MakeUnique<VarExpr>(ParseVar());
+}
+
+UnaryExprPtr Parser::ParseUnaryExpr() {
+    auto id = Expect(Token::Tag::MINUS);
+    auto op = MakeUnique<Operator>(id->Value());
+    auto expr = ParseTopExpr();
+    return MakeUnique<UnaryExpr>(std::move(op), std::move(expr));
 }

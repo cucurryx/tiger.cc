@@ -6,9 +6,13 @@
 #include <utility>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 template <typename K, typename V>
 using Map = std::unordered_map<K, V>;
+
+template <typename K>
+using Set = std::unordered_set<K>;
 
 class Lexer;
 class Parser;
@@ -122,6 +126,15 @@ public:
         return var_;
     }
 
+    const bool IsOperator() const {
+        switch (tag_) {
+        case Tag::PLUS ... Tag::OR:
+            return true;
+        default:
+            return false;
+        }
+    }
+
     static std::optional<Tag> IsKeyword(const std::string &str) {
         auto it = keywords_m_.find(str);
         if (it == keywords_m_.end()) {
@@ -138,17 +151,7 @@ public:
 private:
     static const Map<Tag, std::string> tag_name_m_;
     static const Map<std::string, Tag> keywords_m_;
-};
-
-class Operator {
-public:
-    Operator(std::string &&op_, u64 prec):
-        op_(std::move(op_)),
-        precedence_(prec) {}
-
-private:
-    std::string op_;
-    u64 precedence_;
+    static const Set<Tag> operator_set;
 };
 
 #endif // TIGER_CC_TOKEN_H
