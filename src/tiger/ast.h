@@ -126,6 +126,9 @@ using ArrayDefPtr = std::unique_ptr<ArrayDef>;
 class Identifier {
 public:
     explicit Identifier(std::string name): name_(std::move(name)) {}
+    ~Identifier() = default;
+    std::string ToString(u32 depth);
+
 private:
     std::string name_;
 };
@@ -134,6 +137,7 @@ class Operator {
 public:
     Operator(std::string op_): op_(std::move(op_)) {}
     ~Operator() = default;
+    std::string ToString(u32 depth);
 
 private:
     std::string op_;
@@ -143,6 +147,9 @@ private:
 class TypeId {
 public:
     explicit TypeId(std::string name): name_(std::move(name)) {}
+    ~TypeId() = default;
+    std::string ToString(u32 depth);
+
 private:
     std::string name_;
 };
@@ -151,6 +158,9 @@ class AstNode {
 public:
     AstNode() = default;
     virtual ~AstNode() = default;
+    virtual std::string ToString(u32 depth) {
+        return "AstNode()";
+    }
 };
 
 class Expr: public AstNode {
@@ -162,7 +172,8 @@ public:
         assert(ops_.size() == rights_.size());
     }
     
-    ~Expr() = default;
+    ~Expr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     PrimeExprPtr left_;
@@ -173,21 +184,24 @@ private:
 class PrimeExpr: public AstNode {
 public:
     PrimeExpr() = default;
-    virtual ~PrimeExpr() = default;
+    virtual ~PrimeExpr() override = default;
+    virtual std::string ToString(u32 depth) override;
 };
 
 // nil expression
 class NilExpr: public PrimeExpr {
 public:
     NilExpr() = default;
-    ~NilExpr() = default;
+    ~NilExpr() final = default;
+    std::string ToString(u32 depth) final;
 };
 
 // integer expression
 class IntExpr: public PrimeExpr {
 public:
     IntExpr(i64 num): num_(num) {}
-    ~IntExpr() = default;
+    ~IntExpr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     i64 num_;
@@ -198,7 +212,8 @@ class UnaryExpr: public PrimeExpr {
 public:
     UnaryExpr(OpPtr op, ExprPtr expr):
         op_(std::move(op)), expr_(std::move(expr)) {}
-    ~UnaryExpr() = default;
+    ~UnaryExpr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     OpPtr op_;
@@ -209,7 +224,8 @@ private:
 class StrExpr: public PrimeExpr {
 public:
     StrExpr(std::string s): str_(std::move(s)) {}
-    ~StrExpr() = default;
+    ~StrExpr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     std::string str_;
@@ -223,7 +239,8 @@ public:
         len_(std::move(len)),
         init_(std::move(init)) {}
 
-    ~ArrayCreate() = default;
+    ~ArrayCreate() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     TypeIdPtr type_id_;
@@ -240,7 +257,8 @@ public:
         assert(types_.size() == vars_.size());
     }
 
-    ~RecordCreate() = default;
+    ~RecordCreate() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     TypeIdPtr type_id_;
@@ -251,7 +269,8 @@ private:
 class ObjCreate: public PrimeExpr {
 public:
     ObjCreate(TypeIdPtr type_id): type_id_(std::move(type_id)) {}
-    ~ObjCreate() = default;
+    ~ObjCreate() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     TypeIdPtr type_id_;
@@ -261,7 +280,8 @@ class Var: public AstNode {
 public:
     Var(IdPtr id, VarAPtr rhs): 
         id_(std::move(id)), rhs_(std::move(rhs)) {}
-    ~Var() = default;
+    ~Var() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     IdPtr id_;
@@ -272,12 +292,14 @@ class VarA: public AstNode {
 public:
     VarA() = default;
     virtual ~VarA() = default;
+    virtual std::string ToString(u32 depth);
 };
 
 class BasicVar: public VarA {
 public:
     BasicVar() = default;
-    ~BasicVar() = default;
+    ~BasicVar() final = default;
+    std::string ToString(u32 depth) final;
 };
 
 class FieldVar: public VarA {
@@ -285,7 +307,8 @@ public:
     FieldVar(VarAPtr lvar, IdPtr name):
         lvar_(std::move(lvar)),
         name_(std::move(name)) {}
-    ~FieldVar() = default;
+    ~FieldVar() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     VarAPtr lvar_;
@@ -297,7 +320,8 @@ public:
     ArrayElemVar(VarAPtr lvar, ExprPtr index):
         lvar_(std::move(lvar)),
         index_(std::move(index)) {}
-    ~ArrayElemVar() = default;
+    ~ArrayElemVar() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     VarAPtr lvar_;
@@ -308,7 +332,8 @@ private:
 class VarExpr: public PrimeExpr {
 public:
     VarExpr(VarPtr var): lvar_(std::move(var)) {}
-    ~VarExpr() = default;
+    ~VarExpr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     VarPtr lvar_;
@@ -320,7 +345,8 @@ public:
         name_(std::move(name)),
         args_(std::move(args)) {}
 
-    ~FnCall() = default;
+    ~FnCall() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     IdPtr name_;
@@ -334,7 +360,8 @@ public:
         method_(std::move(method)),
         args_(std::move(args)) {}
 
-    ~MethodCall() = default;
+    ~MethodCall() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     VarPtr lvar_;
@@ -349,7 +376,8 @@ public:
         lhs_(std::move(lhs)),
         rhs_(std::move(rhs)) {}
 
-    ~OpExpr() = default;
+    ~OpExpr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     OperatorPtr op_;
@@ -363,6 +391,7 @@ public:
         exprs_(std::move(exprs)) {}
 
     ~Exprs() = default;
+    std::string ToString(u32 depth);
 
 private:
     ExprPtrVec exprs_;
@@ -371,7 +400,8 @@ private:
 class ExprsExpr: public PrimeExpr {
 public:
     explicit ExprsExpr(ExprsPtr exprs): exprs_(std::move(exprs)) {}
-    ~ExprsExpr() = default;
+    ~ExprsExpr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     ExprsPtr exprs_;
@@ -383,7 +413,8 @@ public:
         lval_(std::move(lvar)),
         expr_(std::move(expr)) {}
 
-    ~AssignExpr() = default;
+    ~AssignExpr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     VarPtr lval_;
@@ -397,7 +428,8 @@ public:
         then_(std::move(_then)),
         else_(std::move(_else)) {}
 
-    ~IfExpr() = default;
+    ~IfExpr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     ExprPtr if_;
@@ -411,7 +443,8 @@ public:
         while_(std::move(_while)),
         do_(std::move(_do)) {}
 
-    ~WhileExpr() = default;
+    ~WhileExpr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     ExprPtr while_;
@@ -426,7 +459,8 @@ public:
         to_(std::move(to)),
         do_(std::move(_do)) {}
 
-    ~ForExpr() = default;
+    ~ForExpr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     IdPtr id_;
@@ -438,7 +472,8 @@ private:
 class BreakExpr: public PrimeExpr {
 public:
     BreakExpr() = default;
-    ~BreakExpr() = default;
+    ~BreakExpr() final = default;
+    std::string ToString(u32 depth) final;
 };
 
 class LetExpr: public PrimeExpr {
@@ -447,7 +482,8 @@ public:
         decs_(std::move(decs)),
         exprs_(std::move(exprs)) {}
 
-    ~LetExpr() = default;
+    ~LetExpr() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     DecsPtr decs_;
@@ -458,13 +494,17 @@ private:
 class Dec: public AstNode {
 public:
     Dec() = default;
-    virtual ~Dec() = default;
+    virtual ~Dec() override = default;
+    virtual std::string ToString(u32 depth) {
+        return "Dec()";
+    }
 };
 
 class Decs: public AstNode {
 public:
     Decs(DecPtrVec decs): decs_(std::move(decs)) {}
-    ~Decs() = default;
+    ~Decs() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     DecPtrVec decs_;
@@ -474,13 +514,14 @@ private:
 class TypeDec: public Dec {
 public:
     TypeDec(IdPtr name, TypePtr type):
-        name(std::move(name)),
+        name_(std::move(name)),
         type_(std::move(type)) {}
 
-    ~TypeDec() = default;
+    ~TypeDec() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
-    IdPtr name;
+    IdPtr name_;
     TypePtr type_;
 };
 
@@ -495,6 +536,7 @@ public:
         fields_(std::move(fields)) {}
 
     ~ClassDef() = default;
+    std::string ToString(u32 depth);
 
 private:
     IdPtr name_;
@@ -511,7 +553,8 @@ public:
         var_(std::move(var)) {}
         
      ~VarDec() = default;
-    
+    std::string ToString(u32 depth);
+
 private:
     IdPtr name_;
     TypeIdPtr type_;
@@ -528,6 +571,7 @@ public:
         body_(std::move(body)) {}
 
     ~FnDec() = default;
+    std::string ToString(u32 depth);
 
 private:
     IdPtr name_;
@@ -545,6 +589,7 @@ public:
         ret_(std::move(ret)) {}
 
     ~PrimDec() = default;
+    std::string ToString(u32 depth);
 
 private:
     IdPtr name_;
@@ -559,6 +604,7 @@ public:
         import_(std::move(import_)) {}
 
     ~ImportDec() = default;
+    std::string ToString(u32 depth);
 
 private:
     std::string import_;
@@ -568,6 +614,7 @@ class ClassField: public AstNode {
 public:
     ClassField() = default;
     virtual ~ClassField() = default;
+    virtual std::string ToString(u32 depth);
 };
 
 class ClassFields: public AstNode {
@@ -575,6 +622,7 @@ public:
     explicit ClassFields(ClassFieldPtrVec fields):
         fields_(std::move(fields)) {}
     ~ClassFields() = default;
+    std::string ToString(u32 depth);
 
 private:
     ClassFieldPtrVec fields_;
@@ -587,7 +635,8 @@ public:
         attr_(std::move(attr)) {}
         
     ~AttrDec() = default;
-    
+    std::string ToString(u32 depth);
+
 private:
     VarDecPtr attr_;
 };
@@ -602,7 +651,8 @@ public:
         body_(std::move(body)) {}
         
     ~MethodDec() = default;
-    
+    std::string ToString(u32 depth);
+
 private:
     IdPtr name_;
     TypeFieldsPtr args_;
@@ -614,6 +664,7 @@ class Type: public AstNode {
 public:
     Type() = default;
     virtual ~Type() = default;
+    virtual std::string ToString(u32 depth);
 };
 
 class TypeAlias: public Type {
@@ -621,6 +672,8 @@ public:
     TypeAlias(TypeIdPtr alias): 
         alias_(std::move(alias)) {}
     ~TypeAlias() = default;
+    std::string ToString(u32 depth);
+
 private:
     TypeIdPtr alias_;
 };
@@ -630,6 +683,8 @@ public:
     RecordDef(TypeFieldsPtr records):
         records_(std::move(records)) {}
     ~RecordDef() = default;
+    std::string ToString(u32 depth);
+
 private:
     TypeFieldsPtr records_;
 };
@@ -639,6 +694,8 @@ public:
     ArrayDef(TypeIdPtr type):
         type_(std::move(type)) {}
     ~ArrayDef() = default;
+    std::string ToString(u32 depth);
+
 private:
     TypeIdPtr type_;
 };
@@ -651,7 +708,8 @@ public:
         fields_(std::move(fields)) {}
         
     ~ClassTypeDef() = default;
-    
+    std::string ToString(u32 depth) final;
+
 private:
     TypeIdPtr parent_;
     ClassFieldsPtr fields_;
@@ -665,7 +723,8 @@ public:
         types_(std::move(types)) {
         assert(names_.size() == types_.size());
     }
-    ~TypeFields() = default;
+    ~TypeFields() final = default;
+    std::string ToString(u32 depth) final;
 
 private:
     IdPtrVec names_;
