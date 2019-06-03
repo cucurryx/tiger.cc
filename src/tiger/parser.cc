@@ -22,7 +22,21 @@ std::map<std::string, u64> op_prec_m_ = {
 };
 
 AstNodePtr Parser::ParseResult() {
-    return nullptr;
+    return ParseMain();
+}
+
+Lexer::TokenPtrVec Parser::FilterTokens(Lexer::TokenPtrVec tokens) {
+    auto result = Lexer::TokenPtrVec();
+    for (auto &p : tokens) {
+        if (p == nullptr
+            || p->Type() == Token::Tag::COMMENT
+            || p->Type() == Token::Tag::EOL) {
+            continue;
+        } else {
+            result.push_back(p);
+        }
+    }
+    return result;
 }
 
 Lexer::TokenPtr Parser::NextToken() {
@@ -62,8 +76,11 @@ Lexer::TokenPtr Parser::Expect(Token::Tag tag) {
     if (CurrToken() == nullptr) {
         PANIC("curr token is null")
     }
-    if (CurrToken()->Type() != tag) {
-        PANIC("not expected token's tag")
+    if (auto curr_tag = CurrToken()->Type(); curr_tag != tag) {
+        auto msg = std::string("[Parser::Expect] not expected token's tag. ")
+                +  "expect " + Token::TagStr(tag)
+                +  ". but we get " + Token::TagStr(curr_tag);
+        PANIC(msg.c_str())
     }
     return NextToken();
 }
@@ -103,6 +120,7 @@ AstNodePtr Parser::ParseMain() {
         case Token::Tag::IMPORT:
         case Token::Tag::VAR:
             result = ParseDecs();
+            break;
         default:
             result = ParseTopExpr();
     }
@@ -112,11 +130,19 @@ AstNodePtr Parser::ParseMain() {
 
 DecsPtr Parser::ParseDecs() {
     auto decs = DecPtrVec();
-    for (;;) {
-        if (auto p = ParseDec(); p != nullptr) {
-            decs.push_back(ParseDec());
-        } else {
+    auto curr = CurrToken();
+    while ((curr = CurrToken()) != nullptr) {
+        switch (curr->Type()) {
+            case Token::Tag::TYPE:
+            case Token::Tag::CLASS:
+            case Token::Tag::FUNCTION:
+            case Token::Tag::PRIMITIVE:
+            case Token::Tag::IMPORT:
+            case Token::Tag::VAR:
+                decs.push_back(std::move(ParseDec()));
             break;
+            default:
+                return MakeUnique<Decs>(std::move(decs));
         }
     }
     return MakeUnique<Decs>(std::move(decs));
@@ -124,9 +150,9 @@ DecsPtr Parser::ParseDecs() {
 
 DecPtr Parser::ParseDec() {
     auto dec = DecPtr();
-    auto token = NextToken();
+    auto token = CurrToken();
     if (token == nullptr) {
-        return nullptr;
+        return dec;
     }
 
     switch (token->Type()) {
@@ -149,12 +175,13 @@ DecPtr Parser::ParseDec() {
             dec = ParseVarDec();
             break;
         default:
-            PANIC("invalid token type")
+            break;
     }
     return dec;
 }
 
 DecPtr Parser::ParseTypeDec() {
+    Expect(Token::Tag::TYPE);
     auto id = Expect(Token::Tag::ID);
     auto _ = Expect(Token::Tag::EQ);
     auto type = ParseType();
@@ -163,6 +190,7 @@ DecPtr Parser::ParseTypeDec() {
 }
 
 DecPtr Parser::ParseClassDefA() {
+    Expect(Token::Tag::CLASS);
     auto id = Expect(Token::Tag::ID);
     auto name = MakeUnique<Identifier>(id->Value());
     auto parent = TypeIdPtr();
@@ -183,28 +211,36 @@ DecPtr Parser::ParseClassDefA() {
 
 ClassFieldsPtr Parser::ParseClassFields() {
     auto fields = ClassFieldPtrVec();
-    auto field = ClassFieldPtr();
-    while ((field = ParseClassField()) != nullptr) {
-        fields.push_back(std::move(field));
+    auto curr = CurrToken();
+    while ((curr = CurrToken()) != nullptr) {
+        switch (curr->Type()) {
+            case Token::Tag::VAR:
+            case Token::Tag::METHOD:
+                fields.push_back(ParseClassField());
+                break;
+            default:
+                return MakeUnique<ClassFields>(std::move(fields));
+        }
     }
     return MakeUnique<ClassFields>(std::move(fields));
 }
 
 // class-field ::= attr-dec | method-dec
 ClassFieldPtr Parser::ParseClassField() {
-    if (Try(Token::Tag::VAR)) {
+    if (CurrIs(Token::Tag::VAR)) {
         return ParseAttrDec();
     }
-    if (Try(Token::Tag::METHOD)) {
+    if (CurrIs(Token::Tag::METHOD)) {
         return ParseMethodDec();
     }
-    PANIC("class field should be attribute or method")
+    PANIC("class field expect `var` or `method`\n")
     return nullptr;
 }
 
 // method declaration in class fields
 // method id (type-fields) [ : type-id ] = exp
 MethodDecPtr Parser::ParseMethodDec() {
+    Expect(Token::Tag::METHOD);
     auto id = Expect(Token::Tag::ID);
     auto name = MakeUnique<Identifier>(id->Value());
     Expect(Token::Tag::LPAREN);
@@ -229,6 +265,7 @@ AttrDecPtr Parser::ParseAttrDec() {
 }
 
 VarDecPtr Parser::ParseVarDec() {
+    Expect(Token::Tag::VAR);
     auto id = Expect(Token::Tag::ID);
     auto name = MakeUnique<Identifier>(id->Value());
     auto type = TypeIdPtr();
@@ -245,6 +282,7 @@ VarDecPtr Parser::ParseVarDec() {
 }
 
 FnDecPtr Parser::ParseFnDec() {
+    Expect(Token::Tag::FUNCTION);
     auto id = Expect(Token::Tag::ID);
     auto name = MakeUnique<Identifier>(id->Value());
 
@@ -266,6 +304,7 @@ FnDecPtr Parser::ParseFnDec() {
 }
 
 PrimDecPtr Parser::ParsePrimDec() {
+    Expect(Token::Tag::PRIMITIVE);
     auto id = Expect(Token::Tag::ID);
     auto name = MakeUnique<Identifier>(id->Value());
     Expect(Token::Tag::LPAREN);
@@ -284,6 +323,7 @@ PrimDecPtr Parser::ParsePrimDec() {
 }
 
 ImportDecPtr Parser::ParseImportDec() {
+    Expect(Token::Tag::IMPORT);
     return MakeUnique<ImportDec>(Expect(Token::Tag::STR)->Value());
 }
 
@@ -344,8 +384,9 @@ TypeFieldsPtr Parser::ParseTypeFields() {
     auto types = TypeIdPtrVec();
 
     if (CurrToken() == nullptr || !CurrIs(Token::Tag::ID)) {
-        return nullptr;
+        return MakeUnique<TypeFields>(std::move(names), std::move(types));
     }
+    
     do {
         auto id = Expect(Token::Tag::ID);
         Expect(Token::Tag::COLON);
@@ -354,7 +395,7 @@ TypeFieldsPtr Parser::ParseTypeFields() {
         names.emplace_back(new Identifier(id->Value()));
         types.emplace_back(new TypeId(type_id->Value()));
 
-    } while (Try(Token::Tag::COMMENT));
+    } while (Try(Token::Tag::COMMA));
 
     return MakeUnique<TypeFields>(std::move(names), std::move(types));
 }
@@ -365,19 +406,21 @@ ExprPtr Parser::ParseTopExpr() {
     auto rights = ExprPtrVec();
     auto curr = CurrToken();
 
-    while ((curr = CurrToken()) != nullptr) {
+    while ((curr = CurrToken()) != nullptr && curr->IsOperator()) {
         if (!curr->IsOperator()) {
-            PANIC("expect operator in expr")
+            auto msg = std::string("expect operator in expr, curr is: " + curr->Name() + "(" + curr->Value() + ")");
+            PANIC(msg.c_str())
         }
+        auto op_ptr = MakeUnique<Operator>(curr->Value());
         NextToken();
         auto rhs = ParseTopExpr();
         if (rhs == nullptr) {
             PANIC("right expr can't be null");
         }
-        auto op_ptr = MakeUnique<Operator>(curr->Value());
         ops.push_back(std::move(op_ptr));
         rights.push_back(std::move(rhs));
     }
+
     return MakeUnique<Expr>(std::move(left),
             std::move(ops), std::move(rights));
 }
@@ -399,7 +442,7 @@ PrimeExprPtr Parser::ParsePrimeExpr() {
         case Token::Tag::MINUS:
             return ParseUnaryExpr();
         case Token::Tag::LPAREN:
-            return ParseExprs();
+            return ParseExprsExpr();
         case Token::Tag::IF:
             return ParseIf();
         case Token::Tag::WHILE:
@@ -603,12 +646,36 @@ LetExprPtr Parser::ParseLet() {
     return MakeUnique<LetExpr>(std::move(decs), std::move(exps));
 }
 
-ExprsExprPtr Parser::ParseExprs() {
+ExprsExprPtr Parser::ParseExprsExpr() {
+    Expect(Token::Tag::LPAREN);
+    auto exps = ParseExprs();
+    Expect(Token::Tag::RPAREN);
+    return MakeUnique<ExprsExpr>(std::move(exps));
+}
+
+ExprsPtr Parser::ParseExprs() {
     auto exps = ExprPtrVec();
-    do {
-        exps.push_back(ParseTopExpr());
-    } while (Try(Token::Tag::COLON));
-    return MakeUnique<ExprsExpr>(MakeUnique<Exprs>(std::move(exps)));
+    if (auto curr = CurrToken(); curr != nullptr) {
+        switch (curr->Type()) {
+            case Token::Tag::NIL:
+            case Token::Tag::NUM:
+            case Token::Tag::STR:
+            case Token::Tag::NEW:
+            case Token::Tag::MINUS:
+            case Token::Tag::LPAREN:
+            case Token::Tag::IF:
+            case Token::Tag::WHILE:
+            case Token::Tag::FOR:
+            case Token::Tag::BREAK:
+            case Token::Tag::LET:
+            case Token::Tag::ID:
+                do {
+                    exps.push_back(ParseTopExpr());
+                } while (Try(Token::Tag::COLON));
+            default: break;
+        }
+    }
+    return MakeUnique<Exprs>(std::move(exps));
 }
 
 VarAPtr Parser::ParseVarA() {
@@ -622,6 +689,7 @@ VarAPtr Parser::ParseVarA() {
         return ParseArrayElem();
     }
     PANIC("no match var parse")
+    return VarAPtr();
 }
 
 VarExprPtr Parser::ParseVarExpr() {

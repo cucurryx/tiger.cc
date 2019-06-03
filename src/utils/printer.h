@@ -6,7 +6,9 @@
 template <typename T>
 class Printer {
 public:
-    static std::string print(const T &val) {}
+    static std::string print(const T &val) {
+        return val.ToString();
+    }
 };
 
 template <>
@@ -16,5 +18,6 @@ public:
         return token.Name() + "(" + token.Value() + ")";
     }
 };
+
 
 #endif //TIGER_CC_PRINTER_H

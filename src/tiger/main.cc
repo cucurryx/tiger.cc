@@ -16,4 +16,5 @@ int main() {
 
     auto parser = Parser(std::move(tokens));
     auto ast = parser.ParseResult();
+    printf("\n%s\n", ast->ToString(0).c_str());
 }

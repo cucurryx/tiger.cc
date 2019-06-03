@@ -478,7 +478,7 @@ public:
 
 class LetExpr: public PrimeExpr {
 public:
-    LetExpr(DecsPtr decs, ExprsExprPtr exprs):
+    LetExpr(DecsPtr decs, ExprsPtr exprs):
         decs_(std::move(decs)),
         exprs_(std::move(exprs)) {}
 
@@ -487,7 +487,7 @@ public:
 
 private:
     DecsPtr decs_;
-    ExprsExprPtr exprs_;
+    ExprsPtr exprs_;
 };
 
 // decs

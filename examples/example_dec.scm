@@ -1,0 +1,22 @@
+Decs(
+    ImportDec(hello world)
+    TypeDec(
+        Id(rec)
+        RecordDef(
+            TypeFields(
+                Id(val)
+                Id(hello)
+                Id(world)
+                TypeId(int)
+                TypeId(int)
+                TypeId(int)
+            )
+        )
+    )
+    TypeDec(
+        Id(rec_arr)
+        ArrayDef(
+            TypeId(rec)
+        )
+    )
+)

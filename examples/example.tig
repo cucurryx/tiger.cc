@@ -1,10 +1,16 @@
 let
-    type rec = { val : int }
-    type rec_arr = array of rec
-    var  table := rec_arr[2] of nil
+  type C = class
+  {
+    /*var a := 1*/
+    method m() =
+      let
+        type D = class
+        {
+	        var a := 1
+	        method m() = ()
+        }
+      in
+      end
+  }
 in
-    for i := 0 to 1 do
-    table[i] := rec { val = 42 };
-    table[0].val := 51
-    /* table[1].val = 42. */
 end

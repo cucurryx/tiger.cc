@@ -2,6 +2,7 @@
 #define TIGER_CC_TOKEN_H
 
 #include "common.h"
+#include "../utils/error.h"
 
 #include <utility>
 #include <string>
@@ -133,6 +134,14 @@ public:
         default:
             return false;
         }
+    }
+
+    static std::string TagStr(Tag tag) {
+        auto it = tag_name_m_.find(tag);
+        if (it == tag_name_m_.end()) {
+            PANIC("invalid token tag")
+        }
+        return it->second;
     }
 
     static std::optional<Tag> IsKeyword(const std::string &str) {

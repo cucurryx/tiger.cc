@@ -67,9 +67,8 @@ classfields ::= { classfield }
 
 # Class fields.
 classfield ::=
-
-# Attribute declaration.
-vardec
+    # Attribute declaration.
+    vardec
     # Method declaration.
     | ‘method’ id ‘(’ tyfields ‘)’ [ ‘:’ type-id ] ‘=’ exp
 

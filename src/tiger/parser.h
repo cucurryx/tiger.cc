@@ -15,11 +15,13 @@ public:
 
 public:
     explicit Parser(Lexer::TokenPtrVec &&tokens):
-        tokens_(std::move(tokens)) {}
+        tokens_(FilterTokens(tokens)) {}
 
     AstNodePtr ParseResult();
 
 private:
+    static Lexer::TokenPtrVec FilterTokens(Lexer::TokenPtrVec tokens);
+
     Lexer::TokenPtr NextToken();
     Lexer::TokenPtr CurrToken();
     Lexer::TokenPtr Expect(Token::Tag tag);
@@ -40,7 +42,7 @@ private:
     IntExprPtr ParseIntExpr();
     StrExprPtr ParseStrExpr();
 
-    // array and recored creation expressions
+    // array and record creation expressions
     ArrayCreatePtr ParseArrayCrt();
     RecordCreatePtr ParseRecordCrt();
 
@@ -69,7 +71,8 @@ private:
     ForExprPtr ParseFor();
     BreakExprPtr ParseBreak();
     LetExprPtr ParseLet();
-    ExprsExprPtr ParseExprs();
+    ExprsExprPtr ParseExprsExpr();
+    ExprsPtr ParseExprs();
 
     // declarations
     DecsPtr ParseDecs();
