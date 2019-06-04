@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main() {
-    auto reader = FileReader("/Users/xiebei/tiger.cc/examples/example.tig");
+    auto reader = FileReader("/Users/xiebei/tiger.cc/examples/declarations/array.tig");
     auto code = reader.ReadAll();
     auto lexer = Lexer(code);
     auto tokens = lexer.GetAllTokens();
