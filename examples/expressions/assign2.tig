@@ -1,0 +1,7 @@
+let
+  var void1 := ()
+  var void2 := ()
+  var void3 := ()
+in
+  void1 := void2 := void3 := ()
+end

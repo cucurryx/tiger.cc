@@ -1,0 +1,9 @@
+/* 1.tih */
+function one() : int = 1
+
+let
+  import "1.tih"
+  import "1.tih"
+in
+  one() = one()
+end

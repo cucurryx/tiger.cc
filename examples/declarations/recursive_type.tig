@@ -1,0 +1,7 @@
+let
+  type indexed_string = {index : int, value : string}
+  type indexed_string_list = {head : indexed_string, tail :
+  indexed_string_list}
+in
+  /* ... */
+end

@@ -1,0 +1,12 @@
+let
+  type any_record = {any : int}
+  var nil_var : any_record := nil
+  function nil_test(parameter : any_record) : int = ...
+  var invalid := nil             /* no type, invalid */
+in
+  if nil <> nil_var then
+    /* ... */
+  if nil_test(nil_var) then
+    /* ... */
+  if nil = nil then /*...*/         /* no type, invalid */
+end

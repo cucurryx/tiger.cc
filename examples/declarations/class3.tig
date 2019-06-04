@@ -1,0 +1,17 @@
+let
+  class duplicate_attrs
+  {
+    var a := 1
+    method m() = ()
+    /* Error, duplicate attribute in the same class.  */
+    var a := 2
+  }
+  class duplicate_meths
+  {
+    method m() = ()
+    var a := 1
+    /* Error, duplicate method in the same class.  */
+    method m() = ()
+  }
+in
+end

@@ -1,0 +1,9 @@
+let
+  class Foo extends Object
+  {
+    var bar := 42
+    method baz() = print("Foo.\n")
+  }
+in
+  /* ... */
+end

@@ -1,0 +1,9 @@
+let
+  function print_conditional(s : string, i : int) =
+    if i then
+      print(s)
+    else
+      print("error")
+in
+  print_conditional("foo", 1)
+end

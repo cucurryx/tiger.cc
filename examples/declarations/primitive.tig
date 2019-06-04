@@ -1,0 +1,6 @@
+let
+  primitive one() : int
+  function  one() : int = 1
+in
+  /* ... */
+end

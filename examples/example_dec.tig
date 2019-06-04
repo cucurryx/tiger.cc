@@ -1,3 +1,0 @@
-import "hello world"
-type rec = { val : int, hello: int, world: int }
-type rec_arr = array of rec
