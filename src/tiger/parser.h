@@ -34,6 +34,7 @@ private:
     AstNodePtr ParseMain();
     // expressions
     ExprPtr ParseTopExpr();
+    ExprPtr ParseExprTail();
     PrimeExprPtr ParsePrimeExpr();
     UnaryExprPtr ParseUnaryExpr();
 

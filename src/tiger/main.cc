@@ -3,9 +3,10 @@
 #include "../utils/printer.h"
 
 #include <iostream>
+#include <vector>
 
-int main() {
-    auto reader = FileReader("/Users/xiebei/tiger.cc/examples/declarations/array.tig");
+void DoParse(const std::string &file) {
+    auto reader = FileReader(file.c_str());
     auto code = reader.ReadAll();
     auto lexer = Lexer(code);
     auto tokens = lexer.GetAllTokens();
@@ -17,4 +18,17 @@ int main() {
     auto parser = Parser(std::move(tokens));
     auto ast = parser.ParseResult();
     printf("\n%s\n", ast->ToString(0).c_str());
+}
+
+int main() {
+    auto files = std::vector<std::string> {
+        "declarations/array.tig",
+        "declarations/method1.tig",
+        "declarations/method2.tig",
+    };
+    auto prefix = std::string("/Users/xiebei/tiger.cc/examples/");
+    for (auto file : files) {
+        file = prefix + file;
+        DoParse(file);
+    }
 }

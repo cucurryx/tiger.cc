@@ -458,21 +458,42 @@ PrimeExprPtr Parser::ParsePrimeExpr() {
             switch (next->Type()) {
                 case Token::Tag::LBRACE:
                     return ParseRecordCrt();
-                case Token::Tag::LSQUB:
-                    return ParseArrayCrt();
                 case Token::Tag::LPAREN:
                     return ParseFnCall();
-                case Token::Tag::DOT:
-                    return ParseVarExpr();
-                default: {
-                    return ParseVarExpr();
-                }
+                default: 
+                    return ParseExprTail();
             }
         }
         default:
             PANIC("invalid token")
     }
     return PrimeExprPtr();
+}
+
+ExprPtr Parser::ParseExprTail() {
+    auto id = NextToken();
+    if (Try(Token::Tag::LSQUB)) {
+        auto index = ParseTopExpr();
+        Expect(Token::Tag::RSQUB);
+
+        // left value
+        if (CurrToken() == nullptr) {
+            auto name = MakeUnique<Identifier>(id->Value());
+            auto rhs = MakeUnique<ArrayElemVar>();
+            auto lvar = MakeUnique<Var>(std::move(name), std::move(index));
+            return MakeUnique<VarExpr>(std::move(lvar));
+        }
+
+        // array creation
+        if (CurrIs(Token::Tag::OF)) {
+
+        }
+    }
+    if (Try(Token::Tag::ID)) {
+
+    }
+    PANIC("expr tail should start with `[` or identifier");
+    return ExprPtr(); //placeholder
 }
 
 NilExprPtr Parser::ParseNilExpr() {
