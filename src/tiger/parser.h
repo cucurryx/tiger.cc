@@ -36,8 +36,8 @@ private:
     // expressions
     ExprPtr ParseTopExpr();
     PrimeExprPtr ParseExprTail();
-    LvarPtr ParseLvar();
-    LvarPtr ParseLvarHelper();
+    LvarPtr ParseLvar(ElemPtr elem);
+    ElemPtr ParseElem();
     PrimeExprPtr ParsePrimeExpr();
     UnaryExprPtr ParseUnaryExpr();
 

@@ -29,6 +29,7 @@ let
 			 row[r]:=0; diag1[r+c]:=0; diag2[r+7-c]:=0)
 
 )
- in try(0)
+in 
+    try(0)
 end
 	

@@ -125,40 +125,26 @@ exp' ::=
         | "break"
         # let-expr
         | "let" decs "in" exps "end"
-        # maybe array creation
-        | type-id lvalue-tail
-        # maybe lvalue, method call or assginment
-        | id lvalue-tail
+        # maybe array creation, lvalue, method call or assginment
+        | others
+
+others ::=
+        # lvalue or array creation
+        id "[" exp "]" array-or-lvalue
+        # lvalue or method call or assignment
+        | lvalue lvalue-tail
+
+array-or-lvalue ::=
+        "of" exp
+        | lvalue
 
 lvalue-tail ::= 
-        # maybe array creation or lvalue
-        "[" exp "]" array-or-lvalue
-        # maybe method call, assginment or lvalue
-        | lalue lalue-last
-
-arrary-or-lvalue ::= 
-        # array creation
-        "of" exp 
-        # lvalue
+        ":=" exp
+        | "." id "(" [ exp { , exp }] ")"
         | null
 
-lalue ::= id lvalue'
-
-lvalue' ::= 
-        # `.id.id`
-        "." id lvalue'
-        # `[exp].id.id` balabala
-        | "[" exp "]" lvalue'
-        # just lvalue
-        | null
-
-lvalue-last ::= 
-        # lvalue
-        null
-        # method call
-        | "." id "(" [ exp { "," exp }] ")"
-        # assginment
-        | ":=" exp
+lvalue ::= elem { "." elem }
+elem ::= id { "[" exp "]" }
 
 exps ::= [ exp { ";" exp } ]
 

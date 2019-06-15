@@ -2,6 +2,7 @@
 .idea/
 cmake-build-debug/
 CMakeFiles/
+build/
 # Prerequisites
 *.d
 

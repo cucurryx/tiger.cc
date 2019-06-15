@@ -50,10 +50,8 @@ class BreakStmt;
 class LetStmt;
 
 // lvalue
+class Elem;
 class Lvar;
-class LvarName;
-class ArrayElem;
-class RecordField;
 
 // declarations
 class Dec;
@@ -104,9 +102,6 @@ DEFINE_PTR(ForStmt);
 DEFINE_PTR(BreakStmt);
 DEFINE_PTR(LetStmt);
 DEFINE_PTR(Lvar);
-DEFINE_PTR(LvarName);
-DEFINE_PTR(ArrayElem);
-DEFINE_PTR(RecordField);
 DEFINE_PTR(Dec);
 DEFINE_PTR(ClassField);
 DEFINE_PTR(ClassFields);
@@ -129,6 +124,7 @@ DEFINE_PTR(ClassTypeDef);
 DEFINE_PTR(ExprSeq);
 DEFINE_PTR(Assignment);
 DEFINE_PTR(MethodCall);
+DEFINE_PTR(Elem);
 
 DEFINE_VEC(IdPtr);
 DEFINE_VEC(TypeIdPtr);
@@ -137,6 +133,7 @@ DEFINE_VEC(DecPtr);
 DEFINE_VEC(ClassFieldPtr);
 DEFINE_VEC(TypePtr);
 DEFINE_VEC(OperatorPtr);
+DEFINE_VEC(ElemPtr);
 
 /**
  * @brief id
@@ -284,42 +281,23 @@ private:
     ExprPtrVec vars_;
 };
 
-class Lvar: public PrimeExpr {
+class Elem: public AstNode {
 public:
-    Lvar() = default;
-    virtual ~Lvar() = default;
-    std::string ToString(u32 depth) {}
-};
-
-class LvarName: public Lvar {
-public:
-    explicit LvarName(IdPtr name): name_(std::move(name)) {}
-    std::string ToString(u32 depth) final;
-
+    Elem(IdPtr name, ExprPtrVec idxs):
+        name_(std::move(name)), idxs_(std::move(idxs)) {}
+    std::string ToString(u32 depth);
 private:
     IdPtr name_;
+    ExprPtrVec idxs_;
 };
 
-class ArrayElem: public Lvar {
+class Lvar: public PrimeExpr {
 public:
-    ArrayElem(IdPtrVec names, ExprPtr index):
-        names_(std::move(names)),
-        index_(std::move(index)) {}
-
-    std::string ToString(u32 depth) final;
+    Lvar(ElemPtrVec elems): elems_(std::move(elems)) {}
+    std::string ToString(u32 depth);
 
 private:
-    IdPtrVec names_;
-    ExprPtr index_;
-};
-
-class RecordField: public Lvar {
-public:
-    RecordField(IdPtrVec names): names_(std::move(names)) {}
-    std::string ToString(u32 depth) final;
-
-private:
-    IdPtrVec names_;
+    ElemPtrVec elems_;
 };
 
 class ObjectNew: public PrimeExpr {

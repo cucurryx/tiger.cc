@@ -38,7 +38,19 @@ template <typename T>
 class ToStringHelper {
 public:
     static std::string Fn(T &&t, int d) {
-        return t->ToString(d);
+        return "unknown type";
+    }
+};
+
+template <typename T>
+class ToStringHelper<std::unique_ptr<T>> {
+public:
+    static std::string Fn(std::unique_ptr<T> &&p, int d) {
+        if (p.get() != nullptr) {
+            return p->ToString(d);
+        } else {
+            return "";
+        }
     }
 };
 
@@ -69,7 +81,7 @@ template <>
 class ToStringHelper<long long> {
 public:
     static std::string Fn(long long t, int d) {
-        return std::to_string(t) ;
+        return INDENT(d) + std::to_string(t) + "\n";
     }
 };
 
@@ -247,18 +259,14 @@ std::string TypeFields::ToString(u32 d) {
     TO_STRING(d, "TypeFields", names_, types_);
 }
 
-std::string LvarName::ToString(u32 d) {
-    TO_STRING(d, "LvarName", name_);
-}
-
-std::string ArrayElem::ToString(u32 d) {
-    TO_STRING(d, "ArrayElem", names_, index_);
-}
-
-std::string RecordField::ToString(u32 d) {
-    TO_STRING(d, "RecordField", names_);
-}
-
 std::string ObjectNew::ToString(u32 d) {
     TO_STRING(d, "ObjectNew", type_);
+}
+
+std::string Elem::ToString(u32 d) {
+    TO_STRING(d, "Elem", name_, idxs_);
+}
+
+std::string Lvar::ToString(u32 d) {
+    TO_STRING(d, "Lvar", elems_);
 }

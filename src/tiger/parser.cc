@@ -471,6 +471,8 @@ PrimeExprPtr Parser::ParsePrimeExpr() {
 }
 
 PrimeExprPtr Parser::ParseExprTail() {
+    auto elem = ElemPtr();
+
     if (PeekNext()->Type() == Token::Tag::LSQUB) {
         auto id = NextToken();
         Expect(Token::Tag::LSQUB);
@@ -482,15 +484,24 @@ PrimeExprPtr Parser::ParseExprTail() {
             auto init = ParseTopExpr();
             auto type = MakeUnique<TypeId>(id->Value());
             return MakeUnique<ArrayCreate>(std::move(type), std::move(len), std::move(init));
-        } else {
-            // array element
-            auto names = IdPtrVec();
-            names.push_back(MakeUnique<Identifier>(id->Value()));
-            return MakeUnique<ArrayElem>(std::move(names), std::move(len));
         }
+
+        auto idxs = ExprPtrVec();
+        idxs.push_back(std::move(len));
+        while (Try(Token::Tag::LSQUB)) {
+            auto idx = ParseTopExpr();
+            Expect(Token::Tag::RSQUB);
+            idxs.push_back(std::move(idx));
+        }
+
+        elem = MakeUnique<Elem>(MakeUnique<Identifier>(id->Value()), std::move(idxs));
+    } else {
+        auto id = NextToken();
+        elem = MakeUnique<Elem>(MakeUnique<Identifier>(id->Value()), ExprPtrVec());
     }
 
-    auto lvar = ParseLvar();
+    // lvar
+    auto lvar = ParseLvar(std::move(elem));
 
     if (Try(Token::Tag::DOT)) {
         auto id = Expect(Token::Tag::ID);
@@ -516,26 +527,6 @@ PrimeExprPtr Parser::ParseExprTail() {
         // lvalue
         return std::move(lvar);
     }
-}
-
-LvarPtr Parser::ParseLvar() {
-    if (CurrIs(Token::Tag::ID)) {
-        return ParseLvarHelper();
-    }
-    PANIC("lvar should start with id");
-    return LvarPtr(); // placeholder
-}
-
-LvarPtr Parser::ParseLvarHelper() {
-    auto names = IdPtrVec();
-    while (CurrIs(Token::Tag::ID)) {
-        names.emplace_back(new Identifier(CurrToken()->Value()));
-        NextToken();
-        if (!Try(Token::Tag::DOT)) {
-            break;
-        }
-    }
-    return MakeUnique<RecordField>(std::move(names));
 }
 
 NilExprPtr Parser::ParseNilExpr() {
@@ -692,4 +683,27 @@ UnaryExprPtr Parser::ParseUnaryExpr() {
     auto op = MakeUnique<Operator>(id->Value());
     auto expr = ParseTopExpr();
     return MakeUnique<UnaryExpr>(std::move(op), std::move(expr));
+}
+
+ElemPtr Parser::ParseElem() {
+    auto id = Expect(Token::Tag::ID);
+    auto idxs = ExprPtrVec();
+    while (Try(Token::Tag::LSQUB)) {
+        idxs.push_back(ParseTopExpr());
+        Expect(Token::Tag::RSQUB);
+    }
+    return MakeUnique<Elem>(MakeUnique<Identifier>(id->Value()), std::move(idxs));
+}
+
+LvarPtr Parser::ParseLvar(ElemPtr elem) {
+    auto elems = ElemPtrVec();
+    elems.push_back(std::move(elem));
+    while (Try(Token::Tag::DOT)) {
+        // method call
+        if (PeekNext()->Type() == Token::Tag::LPAREN) {
+            break;
+        }
+        elems.push_back(ParseElem());
+    }
+    return MakeUnique<Lvar>(std::move(elems));
 }
