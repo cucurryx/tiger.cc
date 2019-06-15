@@ -1,6 +1,0 @@
-let
-  var foo := 1
-  var bar := 1
-in
-  foo := (bar := 2) + 1
-end

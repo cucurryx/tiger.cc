@@ -1,7 +1,0 @@
-let
-  type foo = {foo : int}
-  var bar : foo := nil       /* Correct.   */
-  var baz       := nil       /* Incorrect. */
-in
-  /* ... */
-end

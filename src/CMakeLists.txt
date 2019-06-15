@@ -10,4 +10,4 @@ add_executable(tiger_compiler
         utils/file_reader.h
         utils/error.h
         utils/printer.h
-        utils/error.cc)
+        utils/error.cc utils/stringfy.h)

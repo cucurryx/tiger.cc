@@ -32,9 +32,12 @@ private:
     bool IsOperator(Token::Tag tag);
 
     AstNodePtr ParseMain();
+
     // expressions
     ExprPtr ParseTopExpr();
-    ExprPtr ParseExprTail();
+    PrimeExprPtr ParseExprTail();
+    LvarPtr ParseLvar();
+    LvarPtr ParseLvarHelper();
     PrimeExprPtr ParsePrimeExpr();
     UnaryExprPtr ParseUnaryExpr();
 
@@ -44,35 +47,24 @@ private:
     StrExprPtr ParseStrExpr();
 
     // array and record creation expressions
-    ArrayCreatePtr ParseArrayCrt();
     RecordCreatePtr ParseRecordCrt();
 
     // object creation expressions
-    ObjCreatePtr ParseObjCrt();
+    ObjectNewPtr ParseObjectNew();
 
     //left values
-    VarPtr ParseVar();
-    VarAPtr ParseVarA();
-    VarExprPtr ParseVarExpr();
-    BasicVarPtr ParseBasicVar();
-    ArrayElemVarPtr ParseArrayElem();
-    FieldVarPtr ParseFieldVar();
+
 
     // function and method call
     FnCallPtr ParseFnCall();
-    MethodCallPtr ParseMethodCall();
-
-    // operations and assignment
-    OpExprPtr ParseOpExpr();
-    AssignExprPtr ParseAssignExpr();
 
     // control expressions
-    IfExprPtr ParseIf();
-    WhileExprPtr ParseWhile();
-    ForExprPtr ParseFor();
-    BreakExprPtr ParseBreak();
-    LetExprPtr ParseLet();
-    ExprsExprPtr ParseExprsExpr();
+    IfStmtPtr ParseIf();
+    WhileStmtPtr ParseWhile();
+    ForStmtPtr ParseFor();
+    BreakStmtPtr ParseBreak();
+    LetStmtPtr ParseLet();
+    ExprSeqPtr ParseExprSeq();
     ExprsPtr ParseExprs();
 
     // declarations

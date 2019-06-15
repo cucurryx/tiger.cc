@@ -19,12 +19,6 @@
         return ToStringCommon(d, name, ##args);       \
     } while (0);
 
-// #define TOSTRING_DEFINE(name, args...) std::string \
-//     name##::ToString(u32 d) {                      \
-//         PREVENT_NULL(name);                        \
-//         return TO_STRING(d, name, args);           \
-//     }
-
 template <typename F, typename T, typename... Args>
 std::string ArgsToString(F f, T &&first, Args &&...args) {
     return f(std::move(first)) + ArgsToString(f, std::forward<Args>(args)...);
@@ -44,7 +38,7 @@ template <typename T>
 class ToStringHelper {
 public:
     static std::string Fn(T &&t, int d) {
-        return t->ToString(d+1);
+        return t->ToString(d);
     }
 };
 
@@ -57,7 +51,7 @@ public:
             return ToStringHelper<decltype(t)>::Fn(std::move(t), d+1);
         };
         for (auto &x : t) {
-            result += ArgsToString(fn, d, x) + "\n";
+            result += ArgsToString(fn, x);
         }
         return result;
     }
@@ -67,7 +61,7 @@ template <>
 class ToStringHelper<std::string> {
 public:
     static std::string Fn(std::string &&t, int d) {
-        return INDENT(d) + t;
+        return INDENT(d) + t + "\n";
     }
 };
 
@@ -75,7 +69,7 @@ template <>
 class ToStringHelper<long long> {
 public:
     static std::string Fn(long long t, int d) {
-        return INDENT(d) + std::to_string(t) ;
+        return std::to_string(t) ;
     }
 };
 
@@ -90,27 +84,15 @@ public:
 // generic used ToString function for AstNode's derived classes
 template <typename... Args>
 std::string ToStringCommon(u32 d, const std::string &name, Args &&...args) {
-    auto fn = [d](auto t){
-        return ToStringHelper<decltype(t)>::Fn(std::move(t), d+1) + "\n";
+    if constexpr (sizeof...(args) == 0) {
+        return INDENT(d) + name + "()\n";
+    }
+    auto fn = [d](auto x){
+        return ToStringHelper<decltype(x)>::Fn(std::move(x), d+1);
     };
-    return INDENT(d) + name + "(\n" 
-        + ArgsToString(fn, args...)
-        + "\n"
-        + INDENT(d) + ")";
-}
-
-template <typename T>
-std::string ToStringCommon(u32 d, const std::string &name, T &&t) {
-    auto fn = [d](auto t){
-        return ToStringHelper<decltype(t)>::Fn(std::move(t), d+1);
-    };
-    return INDENT(d) + name + "(" 
-        + ArgsToString(fn, std::move(t)) 
-        + INDENT(d) + ")" + "\n";
-}
-
-std::string ToStringCommon(u32 d, const std::string &name) {
-    return INDENT(d) + name + "()" + "\n";
+    return INDENT(d) + name + "(\n"
+           + ArgsToString(fn, args...)
+           + INDENT(d) + ")\n";
 }
 
 std::string Identifier::ToString(u32 d) {
@@ -157,34 +139,6 @@ std::string RecordCreate::ToString(u32 d) {
     TO_STRING(d, "RecordCreate", type_id_, types_, vars_)
 }
 
-std::string ObjCreate::ToString(u32 d) {
-    TO_STRING(d, "ObjCreate", type_id_);
-}
-
-std::string Var::ToString(u32 d) {
-    TO_STRING(d, "Var", id_, rhs_);
-}
-
-std::string VarA::ToString(u32 d) {
-    TO_STRING(d, "VarA");
-}
-
-std::string BasicVar::ToString(u32 d) {
-    TO_STRING(d, "BasicVar");
-}
-
-std::string FieldVar::ToString(u32 d) {
-    TO_STRING(d, "FieldVar", lvar_, name_);
-}
-
-std::string ArrayElemVar::ToString(u32 d) {
-    TO_STRING(d, "ArrayElemVar", lvar_, index_);
-}
-
-std::string VarExpr::ToString(u32 d) {
-    TO_STRING(d, "VarExpr", lvar_);
-}
-
 std::string FnCall::ToString(u32 d) {
     TO_STRING(d, "FnCall", name_, args_);
 }
@@ -193,39 +147,35 @@ std::string MethodCall::ToString(u32 d) {
     TO_STRING(d, "MethodCall", lvar_, method_, args_);
 }
 
-std::string OpExpr::ToString(u32 d) {
-    TO_STRING(d, "OpExpr", op_, lhs_, rhs_);
-}
-
 std::string Exprs::ToString(u32 d) {
     TO_STRING(d, "Exprs", exprs_);
 }
 
-std::string ExprsExpr::ToString(u32 d) {
+std::string ExprSeq::ToString(u32 d) {
     TO_STRING(d, "ExprsExpr", exprs_);
 }
 
-std::string AssignExpr::ToString(u32 d) {
+std::string Assignment::ToString(u32 d) {
     TO_STRING(d, "AssignExpr", lval_, expr_);
 }
 
-std::string IfExpr::ToString(u32 d) {
+std::string IfStmt::ToString(u32 d) {
     TO_STRING(d, "IfExpr", if_, then_, else_);
 }
 
-std::string WhileExpr::ToString(u32 d) {
+std::string WhileStmt::ToString(u32 d) {
     TO_STRING(d, "WhileExpr", while_, do_);
 }
 
-std::string ForExpr::ToString(u32 d) {
+std::string ForStmt::ToString(u32 d) {
     TO_STRING(d, "ForExpr", id_, from_, to_, do_);
 }
 
-std::string BreakExpr::ToString(u32 d) {
+std::string BreakStmt::ToString(u32 d) {
     TO_STRING(d, "BreakExpr");
 }
 
-std::string LetExpr::ToString(u32 d) {
+std::string LetStmt::ToString(u32 d) {
     TO_STRING(d, "LetExpr", decs_, exprs_);
 }
 
@@ -295,4 +245,20 @@ std::string ClassTypeDef::ToString(u32 d) {
 
 std::string TypeFields::ToString(u32 d) {
     TO_STRING(d, "TypeFields", names_, types_);
+}
+
+std::string LvarName::ToString(u32 d) {
+    TO_STRING(d, "LvarName", name_);
+}
+
+std::string ArrayElem::ToString(u32 d) {
+    TO_STRING(d, "ArrayElem", names_, index_);
+}
+
+std::string RecordField::ToString(u32 d) {
+    TO_STRING(d, "RecordField", names_);
+}
+
+std::string ObjectNew::ToString(u32 d) {
+    TO_STRING(d, "ObjectNew", type_);
 }

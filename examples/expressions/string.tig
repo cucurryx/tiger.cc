@@ -1,5 +1,0 @@
-let
-  var s := "\t\124\111\107\105\122\n"
-in
-  print(s)
-end

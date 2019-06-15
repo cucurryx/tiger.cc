@@ -95,9 +95,7 @@ But, it's left recursion, like `exp ::= exp op exp`. So, it's necessary to trans
 After removing left recursion, part of `exp` would be:
 ```bnf
 
-program ::=
-      exp
-    | decs
+program ::= "let" dec "in" stmt-list "end"
 
 exp ::= exp' { op exp' }
 exp' ::= 
@@ -145,15 +143,16 @@ arrary-or-lvalue ::=
         | null
 
 lalue ::= id lvalue'
-        | id lvalue' "[" exp "]"
 
 lvalue' ::= 
         # `.id.id`
         "." id lvalue'
+        # `[exp].id.id` balabala
+        | "[" exp "]" lvalue'
         # just lvalue
         | null
 
-lalue-last ::= 
+lvalue-last ::= 
         # lvalue
         null
         # method call
@@ -162,4 +161,51 @@ lalue-last ::=
         | ":=" exp
 
 exps ::= [ exp { ";" exp } ]
+
+decs ::= { dec }
+
+dec ::=
+        # Type declaration.
+        "type" id "=" ty
+
+        # Class definition (alternative form).
+        | "class" id [ "extends" type-id ] "{ " classfields "} "
+
+        # Variable declaration.
+        | vardec
+
+        # Function declaration.
+        | "function" id "(" tyfields ")" [ ":" type-id ] "=" exp
+
+        # Primitive declaration.
+        | "primitive" id "(" tyfields ")" [ ":" type-id ]
+
+        # Importing a set of declarations.
+        | "import" string
+
+vardec ::= "var" id [ ":" type-id ] ":=" exp
+
+classfields ::= { classfield }
+
+# Class fields.
+classfield ::=
+        # Attribute declaration.
+        vardec
+        # Method declaration.
+        | "method" id "(" tyfields ")" [ ":" type-id ] "=" exp
+
+# Types.
+ty ::=
+        # Type alias.
+        type-id
+        # Record type definition.
+        | "{ " tyfields  "} "
+        # Array type definition.
+        | "array" "of" type-id
+        # Class definition (canonical form).
+        | "class" [ "extends" type-id ] "{ " classfields "} "
+
+tyfields ::= [ id ":" type-id { "," id ":" type-id } ]
+
+type-id ::= id
 ```

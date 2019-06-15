@@ -1,6 +1,0 @@
-let
-  type int_array = array of int
-  var  table := int_array[100] of 0
-in
-  /*...*/
-end

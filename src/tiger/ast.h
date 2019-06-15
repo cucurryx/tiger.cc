@@ -2,21 +2,62 @@
 #define TIGER_CC_AST_H
 
 #include "token.h"
+#include "../utils/stringfy.h"
 
 #include <vector>
 #include <memory>
 #include <string>
 
+#define DEFINE_PTR(x) using x##Ptr = std::unique_ptr<x>;
+#define DEFINE_VEC(x) using x##Vec = std::vector<x>;
+
 /**
  * @brief pre declarations
  */
 class AstNode;
-class Expr;
 class Operator;
+
+class Expr;
 class PrimeExpr;
+
+// basic expressions
+class NilExpr;
+class IntExpr;
+class StrExpr;
+
+// expression sequence
+class ExprSeq;
+
+// assignment
+class Assignment;
+
+// creation
+class ArrayCreate;
+class RecordCreate;
+class ObjectNew;
+
+class MethodCall;
+class FnCall;
+
+class UnaryExpr;
+class Exprs;
+
+// statements
+class IfStmt;
+class WhileStmt;
+class ForStmt;
+class BreakStmt;
+class LetStmt;
+
+// lvalue
+class Lvar;
+class LvarName;
+class ArrayElem;
+class RecordField;
+
+// declarations
 class Dec;
-class Var;
-class VarA;
+
 class ClassField;
 class ClassFields;
 class Identifier;
@@ -35,95 +76,72 @@ class RecordDef;
 class ArrayDef;
 class ClassDef;
 class ClassTypeDef;
-class NilExpr;
-class IntExpr;
-class StrExpr;
-class ObjCreate;
-class ArrayCreate;
-class RecordCreate;
-class BasicVar;
-class FieldVar;
-class ArrayElemVar;
-class FnCall;
-class MethodCall;
-class OpExpr;
-class AssignExpr;
-class IfExpr;
-class WhileExpr;
-class ForExpr;
-class BreakExpr;
-class LetExpr;
-class Exprs;
-class VarExpr;
-class ExprsExpr;
-class UnaryExpr;
+
 
 /**
  * @brief type. Although using macro can make these
  * `using and pre-declaration` shorter, I don't like it.
  */
 using IdPtr = std::unique_ptr<Identifier>;
-using IdPtrVec = std::vector<IdPtr>;
-using TypeIdPtr = std::unique_ptr<TypeId>;
-using TypeIdPtrVec = std::vector<TypeIdPtr>;
-using AstNodePtr = std::unique_ptr<AstNode>;
-using ExprPtr = std::unique_ptr<Expr>;
-using PrimeExprPtr = std::unique_ptr<PrimeExpr>;
-using DecPtr = std::unique_ptr<Dec>;
-using ClassFieldPtr = std::unique_ptr<ClassField>;
-using ExprPtrVec = std::vector<ExprPtr>;
-using DecPtrVec = std::vector<DecPtr>;
-using ClassFieldPtrVec = std::vector<ClassFieldPtr>;
-using VarPtr = std::unique_ptr<Var>;
-using VarAPtr = std::unique_ptr<VarA>;
-using OperatorPtr = std::unique_ptr<Operator>;
-using TypeFieldsPtr = std::unique_ptr<TypeFields>;
-using VarDecPtr = std::unique_ptr<VarDec>;
-using DecsPtr = std::unique_ptr<Decs>;
-using ClassFieldsPtr = std::unique_ptr<ClassFields>;
-using MethodDecPtr = std::unique_ptr<MethodDec>;
-using AttrDecPtr = std::unique_ptr<AttrDec>;
-using FnDecPtr = std::unique_ptr<FnDec>;
-using PrimDecPtr = std::unique_ptr<PrimDec>;
-using ImportDecPtr = std::unique_ptr<ImportDec>;
-using NilExprPtr = std::unique_ptr<NilExpr>;
-using IntExprPtr = std::unique_ptr<IntExpr>;
-using StrExprPtr = std::unique_ptr<StrExpr>;
-using ObjCreatePtr = std::unique_ptr<ObjCreate>;
-using RecordCreatePtr = std::unique_ptr<RecordCreate>;
-using ArrayCreatePtr = std::unique_ptr<ArrayCreate>;
-using BasicVarPtr = std::unique_ptr<BasicVar>;
-using ArrayElemVarPtr = std::unique_ptr<ArrayElemVar>;
-using FieldVarPtr = std::unique_ptr<FieldVar>;
-using FnCallPtr = std::unique_ptr<FnCall>;
-using MethodCallPtr = std::unique_ptr<MethodCall>;
-using OpExprPtr = std::unique_ptr<OpExpr>;
-using OpExprPtrVec = std::vector<OpExprPtr>;
-using AssignExprPtr = std::unique_ptr<AssignExpr>;
-using IfExprPtr = std::unique_ptr<IfExpr>;
-using WhileExprPtr = std::unique_ptr<WhileExpr>;
-using ForExprPtr = std::unique_ptr<ForExpr>;
-using BreakExprPtr = std::unique_ptr<BreakExpr>;
-using LetExprPtr = std::unique_ptr<LetExpr>;
-using ExprsPtr = std::unique_ptr<Exprs>;
-using VarExprPtr = std::unique_ptr<VarExpr>;
-using ExprsExprPtr = std::unique_ptr<ExprsExpr>;
-using OpPtr = std::unique_ptr<Operator>;
-using OpPtrVec = std::vector<OpPtr>;
-using UnaryExprPtr = std::unique_ptr<UnaryExpr>;
 
-// types
-using TypePtr = std::unique_ptr<Type>;
-using TypePtrVec = std::vector<TypePtr>;
-using TypeAliasPtr = std::unique_ptr<TypeAlias>;
-using RecordDefPtr = std::unique_ptr<RecordDef>;
-using ClassTypeDefPtr = std::unique_ptr<ClassTypeDef>;
-using ArrayDefPtr = std::unique_ptr<ArrayDef>;
+DEFINE_PTR(TypeId);
+DEFINE_PTR(AstNode);
+DEFINE_PTR(Operator);
+DEFINE_PTR(Expr);
+DEFINE_PTR(PrimeExpr);
+DEFINE_PTR(NilExpr);
+DEFINE_PTR(IntExpr);
+DEFINE_PTR(StrExpr);
+DEFINE_PTR(ArrayCreate);
+DEFINE_PTR(RecordCreate);
+DEFINE_PTR(ObjectNew);
+DEFINE_PTR(FnCall);
+DEFINE_PTR(UnaryExpr);
+DEFINE_PTR(Exprs);
+DEFINE_PTR(IfStmt);
+DEFINE_PTR(WhileStmt);
+DEFINE_PTR(ForStmt);
+DEFINE_PTR(BreakStmt);
+DEFINE_PTR(LetStmt);
+DEFINE_PTR(Lvar);
+DEFINE_PTR(LvarName);
+DEFINE_PTR(ArrayElem);
+DEFINE_PTR(RecordField);
+DEFINE_PTR(Dec);
+DEFINE_PTR(ClassField);
+DEFINE_PTR(ClassFields);
+DEFINE_PTR(Identifier);
+DEFINE_PTR(Type);
+DEFINE_PTR(TypeId);
+DEFINE_PTR(TypeFields);
+DEFINE_PTR(VarDec);
+DEFINE_PTR(Decs);
+DEFINE_PTR(MethodDec);
+DEFINE_PTR(AttrDec);
+DEFINE_PTR(FnDec);
+DEFINE_PTR(PrimDec);
+DEFINE_PTR(ImportDec);
+DEFINE_PTR(TypeAlias);
+DEFINE_PTR(RecordDef);
+DEFINE_PTR(ArrayDef);
+DEFINE_PTR(ClassDef);
+DEFINE_PTR(ClassTypeDef);
+DEFINE_PTR(ExprSeq);
+DEFINE_PTR(Assignment);
+DEFINE_PTR(MethodCall);
+
+DEFINE_VEC(IdPtr);
+DEFINE_VEC(TypeIdPtr);
+DEFINE_VEC(ExprPtr);
+DEFINE_VEC(DecPtr);
+DEFINE_VEC(ClassFieldPtr);
+DEFINE_VEC(TypePtr);
+DEFINE_VEC(OperatorPtr);
 
 /**
  * @brief id
  */
-class Identifier {
+class Identifier: public Stringfy {
 public:
     explicit Identifier(std::string name): name_(std::move(name)) {}
     ~Identifier() = default;
@@ -133,7 +151,7 @@ private:
     std::string name_;
 };
 
-class Operator {
+class Operator: public Stringfy {
 public:
     Operator(std::string op_): op_(std::move(op_)) {}
     ~Operator() = default;
@@ -144,7 +162,7 @@ private:
     u64 precedence_;
 };
 
-class TypeId {
+class TypeId: public Stringfy {
 public:
     explicit TypeId(std::string name): name_(std::move(name)) {}
     ~TypeId() = default;
@@ -154,7 +172,7 @@ private:
     std::string name_;
 };
 
-class AstNode {
+class AstNode: public Stringfy {
 public:
     AstNode() = default;
     virtual ~AstNode() = default;
@@ -165,7 +183,7 @@ public:
 
 class Expr: public AstNode {
 public:
-    Expr(PrimeExprPtr left, OpPtrVec ops, ExprPtrVec rights):
+    Expr(PrimeExprPtr left, OperatorPtrVec ops, ExprPtrVec rights):
         left_(std::move(left)),
         ops_(std::move(ops)),
         rights_(std::move(rights)) {
@@ -177,7 +195,7 @@ public:
 
 private:
     PrimeExprPtr left_;
-    OpPtrVec ops_;
+    OperatorPtrVec ops_;
     ExprPtrVec rights_;
 };
 
@@ -210,13 +228,13 @@ private:
 // unary expression
 class UnaryExpr: public PrimeExpr {
 public:
-    UnaryExpr(OpPtr op, ExprPtr expr):
+    UnaryExpr(OperatorPtr op, ExprPtr expr):
         op_(std::move(op)), expr_(std::move(expr)) {}
     ~UnaryExpr() final = default;
     std::string ToString(u32 depth) final;
 
 private:
-    OpPtr op_;
+    OperatorPtr op_;
     ExprPtr expr_;
 };
 
@@ -266,77 +284,51 @@ private:
     ExprPtrVec vars_;
 };
 
-class ObjCreate: public PrimeExpr {
+class Lvar: public PrimeExpr {
 public:
-    ObjCreate(TypeIdPtr type_id): type_id_(std::move(type_id)) {}
-    ~ObjCreate() final = default;
+    Lvar() = default;
+    virtual ~Lvar() = default;
+    std::string ToString(u32 depth) {}
+};
+
+class LvarName: public Lvar {
+public:
+    explicit LvarName(IdPtr name): name_(std::move(name)) {}
     std::string ToString(u32 depth) final;
 
 private:
-    TypeIdPtr type_id_;
-};
-
-class Var: public AstNode {
-public:
-    Var(IdPtr id, VarAPtr rhs): 
-        id_(std::move(id)), rhs_(std::move(rhs)) {}
-    ~Var() final = default;
-    std::string ToString(u32 depth) final;
-
-private:
-    IdPtr id_;
-    VarAPtr rhs_;
-};
-
-class VarA: public AstNode {
-public:
-    VarA() = default;
-    virtual ~VarA() = default;
-    virtual std::string ToString(u32 depth);
-};
-
-class BasicVar: public VarA {
-public:
-    BasicVar() = default;
-    ~BasicVar() final = default;
-    std::string ToString(u32 depth) final;
-};
-
-class FieldVar: public VarA {
-public:
-    FieldVar(VarAPtr lvar, IdPtr name):
-        lvar_(std::move(lvar)),
-        name_(std::move(name)) {}
-    ~FieldVar() final = default;
-    std::string ToString(u32 depth) final;
-
-private:
-    VarAPtr lvar_;
     IdPtr name_;
 };
 
-class ArrayElemVar: public VarA {
+class ArrayElem: public Lvar {
 public:
-    ArrayElemVar(VarAPtr lvar, ExprPtr index):
-        lvar_(std::move(lvar)),
+    ArrayElem(IdPtrVec names, ExprPtr index):
+        names_(std::move(names)),
         index_(std::move(index)) {}
-    ~ArrayElemVar() final = default;
+
     std::string ToString(u32 depth) final;
 
 private:
-    VarAPtr lvar_;
+    IdPtrVec names_;
     ExprPtr index_;
 };
 
-// left value
-class VarExpr: public PrimeExpr {
+class RecordField: public Lvar {
 public:
-    VarExpr(VarPtr var): lvar_(std::move(var)) {}
-    ~VarExpr() final = default;
+    RecordField(IdPtrVec names): names_(std::move(names)) {}
     std::string ToString(u32 depth) final;
 
 private:
-    VarPtr lvar_;
+    IdPtrVec names_;
+};
+
+class ObjectNew: public PrimeExpr {
+public:
+    explicit ObjectNew(TypeIdPtr type): type_(std::move(type)) {}
+    std::string ToString(u32 depth) final;
+
+private:
+    TypeIdPtr type_;
 };
 
 class FnCall: public PrimeExpr {
@@ -355,7 +347,7 @@ private:
 
 class MethodCall: public PrimeExpr {
 public:
-    MethodCall(VarPtr lvar, IdPtr method, ExprPtrVec args):
+    MethodCall(LvarPtr lvar, IdPtr method, ExprPtrVec args):
         lvar_(std::move(lvar)),
         method_(std::move(method)),
         args_(std::move(args)) {}
@@ -364,25 +356,9 @@ public:
     std::string ToString(u32 depth) final;
 
 private:
-    VarPtr lvar_;
+    LvarPtr lvar_;
     IdPtr method_;
     ExprPtrVec args_;
-};
-
-class OpExpr: public PrimeExpr {
-public:
-    OpExpr(OperatorPtr op, ExprPtr lhs, ExprPtr rhs):
-        op_(std::move(op)),
-        lhs_(std::move(lhs)),
-        rhs_(std::move(rhs)) {}
-
-    ~OpExpr() final = default;
-    std::string ToString(u32 depth) final;
-
-private:
-    OperatorPtr op_;
-    ExprPtr lhs_;
-    ExprPtr rhs_;
 };
 
 class Exprs {
@@ -397,38 +373,36 @@ private:
     ExprPtrVec exprs_;
 };
 
-class ExprsExpr: public PrimeExpr {
+class ExprSeq: public PrimeExpr {
 public:
-    explicit ExprsExpr(ExprsPtr exprs): exprs_(std::move(exprs)) {}
-    ~ExprsExpr() final = default;
+    explicit ExprSeq(ExprsPtr exprs): exprs_(std::move(exprs)) {}
     std::string ToString(u32 depth) final;
 
 private:
     ExprsPtr exprs_;
 };
 
-class AssignExpr: public PrimeExpr {
+class Assignment: public PrimeExpr {
 public:
-    AssignExpr(VarPtr lvar, ExprPtr expr):
+    Assignment(LvarPtr lvar, ExprPtr expr):
         lval_(std::move(lvar)),
         expr_(std::move(expr)) {}
 
-    ~AssignExpr() final = default;
     std::string ToString(u32 depth) final;
 
 private:
-    VarPtr lval_;
+    LvarPtr lval_;
     ExprPtr expr_;
 };
 
-class IfExpr: public PrimeExpr {
+class IfStmt: public PrimeExpr {
 public:
-    IfExpr(ExprPtr _if, ExprPtr _then, ExprPtr _else):
+    IfStmt(ExprPtr _if, ExprPtr _then, ExprPtr _else):
         if_(std::move(_if)),
         then_(std::move(_then)),
         else_(std::move(_else)) {}
 
-    ~IfExpr() final = default;
+    ~IfStmt() final = default;
     std::string ToString(u32 depth) final;
 
 private:
@@ -437,13 +411,13 @@ private:
     ExprPtr else_;
 };
 
-class WhileExpr: public PrimeExpr {
+class WhileStmt: public PrimeExpr {
 public:
-    WhileExpr(ExprPtr _while, ExprPtr _do):
+    WhileStmt(ExprPtr _while, ExprPtr _do):
         while_(std::move(_while)),
         do_(std::move(_do)) {}
 
-    ~WhileExpr() final = default;
+    ~WhileStmt() final = default;
     std::string ToString(u32 depth) final;
 
 private:
@@ -451,15 +425,15 @@ private:
     ExprPtr do_;
 };
 
-class ForExpr: public PrimeExpr {
+class ForStmt: public PrimeExpr {
 public:
-    ForExpr(IdPtr id, ExprPtr from, ExprPtr to, ExprPtr _do):
+    ForStmt(IdPtr id, ExprPtr from, ExprPtr to, ExprPtr _do):
         id_(std::move(id)),
         from_(std::move(from)),
         to_(std::move(to)),
         do_(std::move(_do)) {}
 
-    ~ForExpr() final = default;
+    ~ForStmt() final = default;
     std::string ToString(u32 depth) final;
 
 private:
@@ -469,20 +443,20 @@ private:
     ExprPtr do_;
 };
 
-class BreakExpr: public PrimeExpr {
+class BreakStmt: public PrimeExpr {
 public:
-    BreakExpr() = default;
-    ~BreakExpr() final = default;
+    BreakStmt() = default;
+    ~BreakStmt() final = default;
     std::string ToString(u32 depth) final;
 };
 
-class LetExpr: public PrimeExpr {
+class LetStmt: public PrimeExpr {
 public:
-    LetExpr(DecsPtr decs, ExprsPtr exprs):
+    LetStmt(DecsPtr decs, ExprsPtr exprs):
         decs_(std::move(decs)),
         exprs_(std::move(exprs)) {}
 
-    ~LetExpr() final = default;
+    ~LetStmt() final = default;
     std::string ToString(u32 depth) final;
 
 private:

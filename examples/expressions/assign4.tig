@@ -1,8 +1,0 @@
-let
-  class A {}
-  class B extends A {}
-  var a := new A
-  var b := new B
-in
-  a := b
-end
