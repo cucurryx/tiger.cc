@@ -35,10 +35,11 @@ private:
 
     // expressions
     ExprPtr ParseTopExpr();
+    ExprPtr ParseBinaryExpr(u64 expr_prec, ExprPtr lhs);
     PrimeExprPtr ParseExprTail();
     LvarPtr ParseLvar(ElemPtr elem);
     ElemPtr ParseElem();
-    PrimeExprPtr ParsePrimeExpr();
+    ExprPtr ParsePrimeExpr();
     UnaryExprPtr ParseUnaryExpr();
 
     // literal expressions
@@ -92,7 +93,6 @@ private:
 private:
     Lexer::TokenPtrVec tokens_;
     u32 index_ {0};
-    static std::map<std::string, u64> op_prec_m_;
 };
 
 #endif // TIGER_CC_PARSER_H

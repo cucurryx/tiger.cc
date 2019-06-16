@@ -3,23 +3,6 @@
 
 #include <string>
 
-// mapping operator to it's precedence.
-// comparison operators are not associative,
-// others are left-associative
-std::map<std::string, u64> op_prec_m_ = {
-        {"*", 8},
-        {"/", 8},
-        {"+", 4},
-        {"-", 4},
-        {">=", 2},
-        {"<=", 2},
-        {"=", 2},
-        {"<>", 2},
-        {">", 2},
-        {"<", 2},
-        {"&", 1},
-        {"|", 0},
-};
 
 AstNodePtr Parser::ParseResult() {
     return ParseMain();
@@ -400,32 +383,37 @@ TypeFieldsPtr Parser::ParseTypeFields() {
     return MakeUnique<TypeFields>(std::move(names), std::move(types));
 }
 
+// expr ::= primary-expr binoprhs
 ExprPtr Parser::ParseTopExpr() {
     auto left = ParsePrimeExpr();
-    auto ops = OperatorPtrVec();
-    auto rights = ExprPtrVec();
-    auto curr = CurrToken();
-
-    while ((curr = CurrToken()) != nullptr && curr->IsOperator()) {
-        if (!curr->IsOperator()) {
-            auto msg = std::string("expect operator in expr, curr is: " + curr->Name() + "(" + curr->Value() + ")");
-            PANIC(msg.c_str())
-        }
-        auto op_ptr = MakeUnique<Operator>(curr->Value());
-        NextToken();
-        auto rhs = ParseTopExpr();
-        if (rhs == nullptr) {
-            PANIC("right expr can't be null");
-        }
-        ops.push_back(std::move(op_ptr));
-        rights.push_back(std::move(rhs));
-    }
-
-    return MakeUnique<Expr>(std::move(left),
-            std::move(ops), std::move(rights));
+    return ParseBinaryExpr(0, std::move(left));
 }
 
-PrimeExprPtr Parser::ParsePrimeExpr() {
+ExprPtr Parser::ParseBinaryExpr(u64 expr_prec, ExprPtr lhs) {
+    for (;;) {
+        auto curr = CurrToken();
+        if (curr == nullptr || !curr->IsOperator()) {
+            return lhs;
+        }
+
+        auto op = MakeUnique<Operator>(curr->Value());
+        if (op->GetPrecedence() < expr_prec) {
+            return lhs;
+        }
+        NextToken();
+        auto rhs = ParsePrimeExpr();
+        curr = CurrToken();
+        if (curr != nullptr && curr->IsOperator()) {
+            auto next = MakeUnique<Operator>(curr->Value());
+            if (op->GetPrecedence() < next->GetPrecedence()) {
+                rhs = ParseBinaryExpr(op->GetPrecedence()+1, std::move(rhs));
+            }
+        }
+        lhs = MakeUnique<BinaryExpr>(std::move(op), std::move(lhs), std::move(rhs));
+    }
+}
+
+ExprPtr Parser::ParsePrimeExpr() {
     auto curr = CurrToken();
     if (curr == nullptr) {
         PANIC("expression can't be empty")

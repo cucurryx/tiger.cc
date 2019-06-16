@@ -24,13 +24,11 @@ For example:
 ```
 /* define a recursive function */
 let
-
 /* calculate n! */
 function nfactor(n: int): int =
-		if  n = 0 
-			then 1
-			else n * nfactor(n-1)
-
+	if  n = 0
+	then 1
+	else n * nfactor(n-1)
 in
 	nfactor(10)
 end
@@ -39,98 +37,82 @@ end
 it's AST is:
 
 ```
-Expr(
- LetExpr(
-  Decs(
-    FnDec(
-     Id(
-      nfactor
+LetExpr(
+ Decs(
+  FnDec(
+   Id(
+    nfactor
+   )
+   TypeFields(
+    Id(
+     n
+    )
+    TypeId(
+     int
+    )
+   )
+   IfExpr(
+    BinaryExpr(
+     Op(
+      =
      )
-     TypeFields(
+     Lvar(
+      Elem(
        Id(
         n
        )
-       TypeId(
-        int
-       )
+      )
      )
-     Expr(
-      IfExpr(
-       Expr(
-        Lvar(
-          Elem(
-           Id(
-            n
-           )
-          )
-        )
-         Op(
-          =
-         )
-         Expr(
-          IntExpr(
-           0
-          )
-         )
-       )
-       Expr(
-        IntExpr(
-         1
-        )
-       )
-       Expr(
-        Lvar(
-          Elem(
-           Id(
-            n
-           )
-          )
-        )
-         Op(
-          *
-         )
-         Expr(
-          FnCall(
-           Id(
-            nfactor
-           )
-            Expr(
-             Lvar(
-               Elem(
-                Id(
-                 n
-                )
-               )
-             )
-              Op(
-               -
-              )
-              Expr(
-               IntExpr(
-                1
-               )
-              )
-            )
-          )
-         )
+     IntExpr(
+      0
+     )
+    )
+    IntExpr(
+     1
+    )
+    BinaryExpr(
+     Op(
+      *
+     )
+     Lvar(
+      Elem(
+       Id(
+        n
        )
       )
      )
-    )
-  )
-  Exprs(
-    Expr(
      FnCall(
       Id(
        nfactor
       )
-       Expr(
-        IntExpr(
-         10
+      BinaryExpr(
+       Op(
+        -
+       )
+       Lvar(
+        Elem(
+         Id(
+          n
+         )
         )
        )
+       IntExpr(
+        1
+       )
+      )
      )
     )
+   )
+  )
+ )
+ Exprs(
+  FnCall(
+   Id(
+    nfactor
+   )
+   IntExpr(
+    10
+   )
   )
  )
 )

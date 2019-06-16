@@ -60,7 +60,7 @@ public:
     static std::string Fn(std::vector<T> &&t, int d) {
         auto result = std::string();
         auto fn = [d](auto t){
-            return ToStringHelper<decltype(t)>::Fn(std::move(t), d+1);
+            return ToStringHelper<decltype(t)>::Fn(std::move(t), d);
         };
         for (auto &x : t) {
             result += ArgsToString(fn, x);
@@ -120,11 +120,15 @@ std::string TypeId::ToString(u32 d) {
 }
 
 std::string Expr::ToString(u32 d) {
-    TO_STRING(d, "Expr", left_, ops_, rights_);
+    TO_STRING(d, "Expr");
 }
 
 std::string PrimeExpr::ToString(u32 d) {
     TO_STRING(d, "PrimeExpr");
+}
+
+std::string BinaryExpr::ToString(u32 d) {
+    TO_STRING(d, "BinaryExpr", op_, lhs_, rhs_);
 }
 
 std::string NilExpr::ToString(u32 d) {

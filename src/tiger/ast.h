@@ -19,6 +19,7 @@ class Operator;
 
 class Expr;
 class PrimeExpr;
+class BinaryExpr;
 
 // basic expressions
 class NilExpr;
@@ -87,6 +88,7 @@ DEFINE_PTR(AstNode);
 DEFINE_PTR(Operator);
 DEFINE_PTR(Expr);
 DEFINE_PTR(PrimeExpr);
+DEFINE_PTR(BinaryExpr);
 DEFINE_PTR(NilExpr);
 DEFINE_PTR(IntExpr);
 DEFINE_PTR(StrExpr);
@@ -135,6 +137,25 @@ DEFINE_VEC(TypePtr);
 DEFINE_VEC(OperatorPtr);
 DEFINE_VEC(ElemPtr);
 
+
+// mapping operator to it's precedence.
+// comparison operators are not associative,
+// others are left-associative
+static Map<std::string, u64> OP_PREC_MAP = {
+        {"*", 80},
+        {"/", 80},
+        {"+", 40},
+        {"-", 40},
+        {">=", 20},
+        {"<=", 20},
+        {"=", 20},
+        {"<>", 20},
+        {">", 20},
+        {"<", 20},
+        {"&", 10},
+        {"|", 0},
+};
+
 /**
  * @brief id
  */
@@ -150,9 +171,16 @@ private:
 
 class Operator: public Stringfy {
 public:
-    Operator(std::string op_): op_(std::move(op_)) {}
+    Operator(std::string op):
+        op_(std::move(op)),
+        precedence_(OP_PREC_MAP[op_]) {}
+    
     ~Operator() = default;
     std::string ToString(u32 depth);
+
+    u64 GetPrecedence() {
+        return precedence_;
+    }
 
 private:
     std::string op_;
@@ -180,27 +208,32 @@ public:
 
 class Expr: public AstNode {
 public:
-    Expr(PrimeExprPtr left, OperatorPtrVec ops, ExprPtrVec rights):
-        left_(std::move(left)),
-        ops_(std::move(ops)),
-        rights_(std::move(rights)) {
-        assert(ops_.size() == rights_.size());
-    }
-    
-    ~Expr() final = default;
-    std::string ToString(u32 depth) final;
-
-private:
-    PrimeExprPtr left_;
-    OperatorPtrVec ops_;
-    ExprPtrVec rights_;
+    Expr() = default;
+    virtual ~Expr() = default;
+    virtual std::string ToString(u32 depth) override;
 };
 
-class PrimeExpr: public AstNode {
+class PrimeExpr: public Expr {
 public:
     PrimeExpr() = default;
     virtual ~PrimeExpr() override = default;
     virtual std::string ToString(u32 depth) override;
+};
+
+class BinaryExpr: public Expr {
+public:
+    BinaryExpr(OperatorPtr op, ExprPtr lhs, ExprPtr rhs):
+        op_(std::move(op)),
+        lhs_(std::move(lhs)),
+        rhs_(std::move(rhs)) {}
+    ~BinaryExpr() = default;
+
+    std::string ToString(u32 depth) final;
+
+private:
+    OperatorPtr op_;
+    ExprPtr lhs_;
+    ExprPtr rhs_;
 };
 
 // nil expression
