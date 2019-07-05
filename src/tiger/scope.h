@@ -1,0 +1,4 @@
+#ifndef TIGER_CC_SCOPE_H
+#define TIGER_CC_SCOPE_H
+
+#endif // TIGER_CC_SCOPE_H
